@@ -20,6 +20,10 @@ BuildRequires:	python
 BuildRequires:	pkgconfig
 BuildRequires:	pkgconfig(zlib)
 
+Requires:	openjdk
+Requires:	openjdk-jre
+Requires:	openjdk-jre-essentials
+
 %description
 Bazel Build for Tizen
 
