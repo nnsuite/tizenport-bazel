@@ -1,3 +1,6 @@
+%global debug_package %{nil}
+%global __debug_install_post %{nil}
+
 Name:		bazel
 Version:	0.18.1
 Release:	0
@@ -33,6 +36,9 @@ chmod 0644 AUTHORS CHANGELOG.md CONTRIBUTORS LICENSE
 cp %{SOURCE1000} .
 
 %build
+%ifarch aarch64 %arm
+export BAZEL_JAVAC_OPTS="-J-Xmx2g -J-Xms200m"
+%endif
 CC=gcc
 CXX=g++
 EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
