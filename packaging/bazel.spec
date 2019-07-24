@@ -27,6 +27,9 @@ Requires:	openjdk
 Requires:	openjdk-jre
 Requires:	openjdk-jre-essentials
 
+# Bazel does not support intel-32b arch.
+ExcludeArch:	%ix86
+
 %description
 Bazel Build for Tizen
 
