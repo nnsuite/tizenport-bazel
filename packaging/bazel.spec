@@ -6,7 +6,7 @@ License:	Apache-2.0
 Group:		Development/Tools
 Url:		https://github.com/bazelbuild/bazel
 
-Source0:	bazel-%{version}-%{release}.tar.gz
+Source0:	bazel-%{version}.tar.gz
 
 Source1000:	bazel.manifest
 
