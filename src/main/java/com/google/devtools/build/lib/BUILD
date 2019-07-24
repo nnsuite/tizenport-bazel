@@ -14,7 +14,6 @@ filegroup(
         "//src/main/java/com/google/devtools/build/lib/analysis/platform:srcs",
         "//src/main/java/com/google/devtools/build/lib/analysis/skylark/annotations:srcs",
         "//src/main/java/com/google/devtools/build/lib/analysis/skylark/annotations/processor:srcs",
-        "//src/main/java/com/google/devtools/build/lib/analysis/whitelisting:srcs",
         "//src/main/java/com/google/devtools/build/lib/authandtls:srcs",
         "//src/main/java/com/google/devtools/build/lib/bazel/repository/cache:srcs",
         "//src/main/java/com/google/devtools/build/lib/bazel/repository/downloader:srcs",
@@ -354,7 +353,19 @@ java_library(
     ]),
     visibility = ["//src/main/java/com/google/devtools/build/lib/skylarkinterface/processor:__pkg__"],
     deps = [
+        ":skylark_semantics",
         "//third_party:jsr305",
+    ],
+)
+
+java_library(
+    name = "skylark_semantics",
+    srcs = [
+        "syntax/SkylarkSemantics.java",
+    ],
+    deps = [
+        "//third_party:auto_value",
+        "//third_party:guava",
     ],
 )
 
@@ -569,6 +580,7 @@ java_library(
         "//src/main/java/com/google/devtools/build/lib:keep-going-option",
         "//src/main/java/com/google/devtools/build/lib:os_util",
         "//src/main/java/com/google/devtools/build/lib:packages-internal",
+        "//src/main/java/com/google/devtools/build/lib:process_util",
         "//src/main/java/com/google/devtools/build/lib:skylark-provider-collection",
         "//src/main/java/com/google/devtools/build/lib:skylarkinterface",
         "//src/main/java/com/google/devtools/build/lib:syntax",
@@ -577,6 +589,7 @@ java_library(
         "//src/main/java/com/google/devtools/build/lib:util",
         "//src/main/java/com/google/devtools/build/lib/actions",
         "//src/main/java/com/google/devtools/build/lib/actions:commandline_item",
+        "//src/main/java/com/google/devtools/build/lib/actions:localhost_capacity",
         "//src/main/java/com/google/devtools/build/lib/analysis/platform",
         "//src/main/java/com/google/devtools/build/lib/analysis/platform:utils",
         "//src/main/java/com/google/devtools/build/lib/analysis/skylark/annotations",
@@ -651,7 +664,6 @@ java_library(
         "//src/main/java/com/google/devtools/build/lib:util",
         "//src/main/java/com/google/devtools/build/lib/actions",
         "//src/main/java/com/google/devtools/build/lib/analysis/platform",
-        "//src/main/java/com/google/devtools/build/lib/analysis/whitelisting",
         "//src/main/java/com/google/devtools/build/lib/buildeventstream",
         "//src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
         "//src/main/java/com/google/devtools/build/lib/cmdline",
@@ -717,9 +729,7 @@ java_library(
     srcs = ["bazel/Bazel.java"],
     resources = [
         "bazel/rules/java/java_stub_template.txt",
-        "bazel/rules/java/java_stub_template_windows.txt",
         "bazel/rules/python/python_stub_template.txt",
-        "bazel/rules/sh/sh_stub_template_windows.txt",
     ],
     deps = [
         ":bazel-coverage",
@@ -819,6 +829,7 @@ java_library(
         "//src/main/java/com/google/devtools/build/lib:runtime",
         "//src/main/java/com/google/devtools/build/lib:util",
         "//src/main/java/com/google/devtools/build/lib/actions",
+        "//src/main/java/com/google/devtools/build/lib/actions:localhost_capacity",
         "//src/main/java/com/google/devtools/build/lib/concurrent",
         "//src/main/java/com/google/devtools/build/lib/vfs",
         "//src/main/java/com/google/devtools/build/lib/vfs:pathfragment",
@@ -929,6 +940,7 @@ java_library(
         "//src/main/java/com/google/devtools/build/lib:util",
         "//src/main/java/com/google/devtools/build/lib/actions",
         "//src/main/java/com/google/devtools/build/lib/actions:commandline_item",
+        "//src/main/java/com/google/devtools/build/lib/actions:localhost_capacity",
         "//src/main/java/com/google/devtools/build/lib/collect",
         "//src/main/java/com/google/devtools/build/lib/collect/nestedset",
         "//src/main/java/com/google/devtools/build/lib/concurrent",
@@ -1086,6 +1098,7 @@ java_library(
         "//src/main/java/com/google/devtools/build/lib:util",
         "//src/main/java/com/google/devtools/build/lib/actions",
         "//src/main/java/com/google/devtools/build/lib/actions:commandline_item",
+        "//src/main/java/com/google/devtools/build/lib/actions:localhost_capacity",
         "//src/main/java/com/google/devtools/build/lib/analysis/platform",
         "//src/main/java/com/google/devtools/build/lib/analysis/skylark/annotations",
         "//src/main/java/com/google/devtools/build/lib/cmdline",
@@ -1188,9 +1201,9 @@ java_library(
         "//src/main/java/com/google/devtools/build/lib:util",
         "//src/main/java/com/google/devtools/build/lib/actions",
         "//src/main/java/com/google/devtools/build/lib/actions:commandline_item",
+        "//src/main/java/com/google/devtools/build/lib/actions:localhost_capacity",
         "//src/main/java/com/google/devtools/build/lib/analysis/platform",
         "//src/main/java/com/google/devtools/build/lib/analysis/skylark/annotations",
-        "//src/main/java/com/google/devtools/build/lib/analysis/whitelisting",
         "//src/main/java/com/google/devtools/build/lib/collect",
         "//src/main/java/com/google/devtools/build/lib/collect/nestedset",
         "//src/main/java/com/google/devtools/build/lib/concurrent",
@@ -1255,6 +1268,7 @@ java_library(
     deps = [
         "//src/main/java/com/google/devtools/build/lib:util",
         "//src/main/java/com/google/devtools/build/lib/actions",
+        "//src/main/java/com/google/devtools/build/lib/actions:localhost_capacity",
         "//src/main/java/com/google/devtools/build/lib/vfs",
         "//src/main/java/com/google/devtools/common/options",
         "//third_party:guava",
@@ -1270,7 +1284,10 @@ java_library(
 java_library(
     name = "loading-phase-threads-option",
     srcs = ["runtime/LoadingPhaseThreadsOption.java"],
-    deps = ["//src/main/java/com/google/devtools/common/options"],
+    deps = [
+        "//src/main/java/com/google/devtools/build/lib/actions:localhost_capacity",
+        "//src/main/java/com/google/devtools/common/options",
+    ],
 )
 
 java_library(
@@ -1335,6 +1352,7 @@ java_library(
         "//src/main/java/com/google/devtools/build/lib:unix",
         "//src/main/java/com/google/devtools/build/lib:util",
         "//src/main/java/com/google/devtools/build/lib/actions",
+        "//src/main/java/com/google/devtools/build/lib/actions:localhost_capacity",
         "//src/main/java/com/google/devtools/build/lib/bazel/repository/downloader",
         "//src/main/java/com/google/devtools/build/lib/buildeventstream",
         "//src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",

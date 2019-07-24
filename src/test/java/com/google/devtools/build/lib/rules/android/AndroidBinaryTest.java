@@ -19,6 +19,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.devtools.build.lib.actions.util.ActionsTestUtil.getFirstArtifactEndingWith;
 import static com.google.devtools.build.lib.actions.util.ActionsTestUtil.prettyArtifactNames;
+import static com.google.devtools.build.lib.rules.java.JavaCompileActionTestHelper.getJavacArguments;
+import static com.google.devtools.build.lib.rules.java.JavaCompileActionTestHelper.getProcessorpath;
 import static com.google.devtools.build.lib.testutil.MoreAsserts.assertThrows;
 
 import com.google.common.base.Joiner;
@@ -119,7 +121,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
         assertThrows(AssertionError.class, () -> getConfiguredTarget("//test/skylark:test"));
     assertThat(noToolchainError)
         .hasMessageThat()
-        .contains("No default_toolchain found for cpu 'doesnotexist'");
+        .contains("No toolchain found for cpu 'doesnotexist'");
   }
 
   @Test
@@ -242,11 +244,13 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
     JavaCompileAction javacAction = (JavaCompileAction) getGeneratingAction(
         getBinArtifact("libto_be_processed.jar", target));
 
-    assertThat(javacAction.getProcessorNames()).contains("com.google.process.stuff");
-    assertThat(javacAction.getProcessorNames()).hasSize(1);
+    assertThat(getProcessorNames(javacAction)).contains("com.google.process.stuff");
+    assertThat(getProcessorNames(javacAction)).hasSize(1);
 
-    assertThat(ActionsTestUtil.baseNamesOf(javacAction.getProcessorpath()))
-        .isEqualTo("libplugin.jar libplugin_dep.jar");
+    assertThat(
+            ActionsTestUtil.baseArtifactNames(
+                getInputs(javacAction, getProcessorpath(javacAction))))
+        .containsExactly("libplugin.jar", "libplugin_dep.jar");
     assertThat(
             actionsTestUtil()
                 .predecessorClosureOf(getFilesToBuild(target), JavaSemantics.JAVA_SOURCE))
@@ -272,10 +276,12 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
     JavaCompileAction javacAction = (JavaCompileAction) getGeneratingAction(
         getBinArtifact("libto_be_processed.jar", target));
 
-    assertThat(javacAction.getProcessorNames()).contains("com.google.process.stuff");
-    assertThat(javacAction.getProcessorNames()).hasSize(1);
-    assertThat(ActionsTestUtil.baseNamesOf(javacAction.getProcessorpath()))
-        .isEqualTo("libplugin.jar libplugin_dep.jar");
+    assertThat(getProcessorNames(javacAction)).contains("com.google.process.stuff");
+    assertThat(getProcessorNames(javacAction)).hasSize(1);
+    assertThat(
+            ActionsTestUtil.baseArtifactNames(
+                getInputs(javacAction, getProcessorpath(javacAction))))
+        .containsExactly("libplugin.jar", "libplugin_dep.jar");
     assertThat(
             actionsTestUtil()
                 .predecessorClosureOf(getFilesToBuild(target), JavaSemantics.JAVA_SOURCE))
@@ -1083,7 +1089,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
     ConfiguredTarget b1 = getConfiguredTarget("//java/com/google/android/neversayneveragain:b1");
     Action b1DeployAction = actionsTestUtil().getActionForArtifactEndingWith(
         actionsTestUtil().artifactClosureOf(getFilesToBuild(b1)), "b1_deploy.jar");
-    List<String> b1Inputs = ActionsTestUtil.prettyArtifactNames(b1DeployAction.getInputs());
+    List<String> b1Inputs = prettyArtifactNames(b1DeployAction.getInputs());
 
     assertThat(b1Inputs).containsNoneOf(
         "java/com/google/android/neversayneveragain/libl1.jar_desugared.jar",
@@ -1100,7 +1106,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
     ConfiguredTarget b2 = getConfiguredTarget("//java/com/google/android/neversayneveragain:b2");
     Action b2DeployAction = actionsTestUtil().getActionForArtifactEndingWith(
         actionsTestUtil().artifactClosureOf(getFilesToBuild(b2)), "b2_deploy.jar");
-    List<String> b2Inputs = ActionsTestUtil.prettyArtifactNames(b2DeployAction.getInputs());
+    List<String> b2Inputs = prettyArtifactNames(b2DeployAction.getInputs());
 
     assertThat(b2Inputs).containsNoneOf(
         "java/com/google/android/neversayneveragain/libl1.jar_desugared.jar",
@@ -1117,7 +1123,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
     ConfiguredTarget b3 = getConfiguredTarget("//java/com/google/android/neversayneveragain:b3");
     Action b3DeployAction = actionsTestUtil().getActionForArtifactEndingWith(
         actionsTestUtil().artifactClosureOf(getFilesToBuild(b3)), "b3_deploy.jar");
-    List<String> b3Inputs = ActionsTestUtil.prettyArtifactNames(b3DeployAction.getInputs());
+    List<String> b3Inputs = prettyArtifactNames(b3DeployAction.getInputs());
 
     assertThat(b3Inputs).containsAllOf(
         "java/com/google/android/neversayneveragain/_dx/l1/libl1.jar_desugared.jar",
@@ -1250,7 +1256,6 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
         "android_binary(name = 'r',",
         "  manifest = 'AndroidManifest.xml',",
         "  resource_files = ['res/" + badQualifierDir + "/foo.xml'],",
-        "  prefilter_resources = 1,",
         "  resource_configuration_filters = ['en'])");
   }
 
@@ -2809,7 +2814,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
         actionsTestUtil().getActionForArtifactEndingWith(
               actionsTestUtil().artifactClosureOf(deployAction.getInputs()), "liba.jar");
 
-    assertThat(javacAction.buildCommandLine()).contains("-g:lines,source");
+    assertThat(getJavacArguments(javacAction)).contains("-g:lines,source");
   }
 
   @Test
@@ -2823,7 +2828,8 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
         "  srcs = ['A.java'])");
 
     Iterable<String> commandLine =
-        ((JavaCompileAction)
+        getJavacArguments(
+            ((JavaCompileAction)
                 actionsTestUtil()
                     .getActionForArtifactEndingWith(
                         actionsTestUtil()
@@ -2832,8 +2838,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
                                         getFileConfiguredTarget("//java/foo:a_deploy.jar")
                                             .getArtifact())
                                     .getInputs()),
-                        "liba.jar"))
-            .buildCommandLine();
+                        "liba.jar")));
 
     assertThat(commandLine).containsAllOf("--experimental_fix_deps_tool", "autofixer").inOrder();
   }
@@ -2847,7 +2852,8 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
         "  srcs = ['A.java'])");
 
     Iterable<String> commandLine =
-        ((JavaCompileAction)
+        getJavacArguments(
+            ((JavaCompileAction)
                 actionsTestUtil()
                     .getActionForArtifactEndingWith(
                         actionsTestUtil()
@@ -2856,8 +2862,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
                                         getFileConfiguredTarget("//java/foo:a_deploy.jar")
                                             .getArtifact())
                                     .getInputs()),
-                        "liba.jar"))
-            .buildCommandLine();
+                        "liba.jar")));
 
     assertThat(commandLine).containsAllOf("--experimental_fix_deps_tool", "add_dep").inOrder();
   }
@@ -3767,7 +3772,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
         getFilesToBuild(binary), "_proguard.jar");
 
     assertWithMessage("Proguard action does not contain expected inputs.")
-        .that(ActionsTestUtil.prettyArtifactNames(action.getInputs()))
+        .that(prettyArtifactNames(action.getInputs()))
         .containsAllOf(
             "java/com/google/android/hello/proguard-spec.pro",
             "java/com/google/android/hello/proguard-spec1.pro",
@@ -3900,7 +3905,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
 
     SpawnAction action = (SpawnAction) actionsTestUtil().getActionForArtifactEndingWith(
         getFilesToBuild(getConfiguredTarget("//java/com/google/android/hello:b")), "_proguard.jar");
-    assertThat(ActionsTestUtil.prettyArtifactNames(action.getInputs())).containsNoDuplicates();
+    assertThat(prettyArtifactNames(action.getInputs())).containsNoDuplicates();
     assertThat(Collections2.filter(action.getArguments(), arg -> arg.startsWith("@")))
         .containsExactly(
             "@" + execPathEndingWith(action.getInputs(), "/proguard-spec.pro"),
@@ -3921,7 +3926,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
 
     SpawnAction action = (SpawnAction) actionsTestUtil().getActionForArtifactEndingWith(
         getFilesToBuild(getConfiguredTarget("//java/com/google/android/hello:b")), "_proguard.jar");
-    assertThat(ActionsTestUtil.prettyArtifactNames(action.getInputs())).containsNoDuplicates();
+    assertThat(prettyArtifactNames(action.getInputs())).containsNoDuplicates();
     assertThat(Collections2.filter(action.getArguments(), arg -> arg.startsWith("@")))
         .containsExactly(
             "@java/com/google/android/hello/proguard-spec.pro",
@@ -4019,7 +4024,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
 
     SpawnAction action = (SpawnAction) actionsTestUtil().getActionForArtifactEndingWith(
         getFilesToBuild(getConfiguredTarget("//java/com/google/android/hello:b")), "_proguard.jar");
-    assertThat(ActionsTestUtil.prettyArtifactNames(action.getInputs())).containsNoDuplicates();
+    assertThat(prettyArtifactNames(action.getInputs())).containsNoDuplicates();
     return action;
   }
 
@@ -4045,11 +4050,12 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
     assertProguardGenerated(getConfiguredTarget("//java/com/google/android/hello:b"));
     SpawnAction action = (SpawnAction) actionsTestUtil().getActionForArtifactEndingWith(
         getFilesToBuild(getConfiguredTarget("//java/com/google/android/hello:b")), "_proguard.jar");
-    assertThat(prettyArtifactNames(action.getInputs())).contains(
-        "java/com/google/android/hello/proguard-spec.pro");
-    assertThat(prettyArtifactNames(action.getInputs())).contains(
-        "java/com/google/android/hello/validated_proguard/l2/java/com/google/android/hello/library_spec.cfg_valid");
-    assertThat(ActionsTestUtil.prettyArtifactNames(action.getInputs())).containsNoDuplicates();
+    assertThat(prettyArtifactNames(action.getInputs()))
+        .contains("java/com/google/android/hello/proguard-spec.pro");
+    assertThat(prettyArtifactNames(action.getInputs()))
+        .contains(
+            "java/com/google/android/hello/validated_proguard/l2/java/com/google/android/hello/library_spec.cfg_valid");
+    assertThat(prettyArtifactNames(action.getInputs())).containsNoDuplicates();
   }
 
   @Test
@@ -4069,7 +4075,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
 
     assertProguardGenerated(binary);
     assertWithMessage("Generate proguard action does not contain expected input.")
-        .that(ActionsTestUtil.prettyArtifactNames(action.getInputs()))
+        .that(prettyArtifactNames(action.getInputs()))
         .contains("java/com/google/android/hello/res/values/strings.xml");
   }
 
@@ -4126,8 +4132,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
     ConfiguredTarget postprocess = getConfiguredTarget("//java/com/google/android:postprocess");
     assertThat(postprocess).isNotNull();
     assertThat(
-            ActionsTestUtil.prettyArtifactNames(
-                postprocess.getProvider(FilesToRunProvider.class).getFilesToRun()))
+            prettyArtifactNames(postprocess.getProvider(FilesToRunProvider.class).getFilesToRun()))
         .containsExactly("java/com/google/android/b1.apk");
   }
 
@@ -4154,9 +4159,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
         "             attrs={'dep': attr.label(providers=[AndroidInstrumentationInfo])})");
     ConfiguredTarget instr = getConfiguredTarget("//java/com/google/android/instr");
     assertThat(instr).isNotNull();
-    assertThat(
-            ActionsTestUtil.prettyArtifactNames(
-                instr.getProvider(FilesToRunProvider.class).getFilesToRun()))
+    assertThat(prettyArtifactNames(instr.getProvider(FilesToRunProvider.class).getFilesToRun()))
         .containsExactly(
             "java/com/google/android/instr/b1.apk", "java/com/google/android/instr/b2.apk");
   }
@@ -4324,7 +4327,7 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
     ConfiguredTarget b = getDirectPrerequisite(a, "//java/b:b");
 
     List<String> resourceProcessingArgs =
-        getGeneratingSpawnActionArgs(getValidatedResources(a).getRTxt());
+        getGeneratingSpawnActionArgs(getValidatedResources(a).getApk());
 
     assertThat(resourceProcessingArgs).contains("AAPT2_PACKAGE");
     String directData =
@@ -4338,6 +4341,50 @@ public class AndroidBinaryTest extends AndroidBuildViewTestCase {
         getGeneratingSpawnActionArgs(getValidatedResources(b).getJavaClassJar());
 
     assertThat(resourceMergingArgs).contains("MERGE_COMPILED");
+  }
+
+  @Test
+  public void alwaysSkipParsingActionWithAapt2() throws Exception {
+    mockAndroidSdkWithAapt2();
+    scratch.file(
+        "java/b/BUILD",
+        "android_library(",
+        "    name = 'b',",
+        "    srcs = ['B.java'],",
+        "    manifest = 'AndroidManifest.xml',",
+        "    resource_files = [ 'res/values/values.xml' ], ",
+        ")");
+
+    scratch.file(
+        "java/a/BUILD",
+        "android_binary(",
+        "    name = 'a',",
+        "    srcs = ['A.java'],",
+        "    manifest = 'AndroidManifest.xml',",
+        "    deps = [ '//java/b:b' ],",
+        "    resource_files = [ 'res/values/values.xml' ], ",
+        "    aapt_version = 'aapt2'",
+        ")");
+
+    useConfiguration("--android_sdk=//sdk:sdk");
+    ConfiguredTarget a = getConfiguredTarget("//java/a:a");
+    ConfiguredTarget b = getDirectPrerequisite(a, "//java/b:b");
+
+    List<String> resourceProcessingArgs =
+        getGeneratingSpawnActionArgs(getValidatedResources(a).getApk());
+
+    assertThat(resourceProcessingArgs).contains("AAPT2_PACKAGE");
+    String directData =
+        resourceProcessingArgs.get(resourceProcessingArgs.indexOf("--directData") + 1);
+    assertThat(directData).contains("symbols.zip");
+    assertThat(directData).doesNotContain("merged.bin");
+    assertThat(resourceProcessingArgs).contains("--useCompiledResourcesForMerge");
+
+    // Libraries will still need to merge the xml until skip parsing is on by default.
+    List<String> resourceMergingArgs =
+        getGeneratingSpawnActionArgs(getValidatedResources(b).getJavaClassJar());
+
+    assertThat(resourceMergingArgs).contains("MERGE");
   }
 
   @Test

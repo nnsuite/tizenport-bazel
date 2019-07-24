@@ -77,6 +77,15 @@ EOF
 function test_javabase() {
   mkdir -p zoo/bin
   cat << EOF > BUILD
+load("@bazel_tools//tools/jdk:default_java_toolchain.bzl", "default_java_toolchain", "JDK9_JVM_OPTS")
+default_java_toolchain(
+    name = "toolchain",
+    # Implicitly use the host_javabase bootclasspath, since the target doesn't
+    # exist in this test.
+    bootclasspath = [],
+    jvm_opts = JDK9_JVM_OPTS,
+    visibility = ["//visibility:public"],
+)
 java_runtime(
     name = "javabase",
     java_home = "$PWD/zoo",
@@ -96,7 +105,7 @@ public class HelloWorld {}
 EOF
 
   # Check that the RHS javabase appears in the launcher.
-  bazel build --javabase=//:javabase //java:javabin
+  bazel build --java_toolchain=//:toolchain --javabase=//:javabase //java:javabin
   cat bazel-bin/java/javabin >& $TEST_log
   expect_log "JAVABIN=.*/zoo/bin/java"
 
@@ -157,12 +166,59 @@ function test_no_javabase_default_embedded() {
 
   write_javabase_files
 
-  bazel --batch build //javabase_test:a
+  bazel --batch build --noincompatible_never_use_embedded_jdk_for_javabase //javabase_test:a
 
   echo $(bazel-bin/javabase_test/a --print_javabin) >& $TEST_log
   expect_log "bazel-bin/javabase_test/a.runfiles/local_jdk/bin/java"
   $(bazel-bin/javabase_test/a --print_javabin) -version >& $TEST_log
   expect_log "Zulu"
+}
+
+function test_genrule() {
+  mkdir -p foo/bin bar/bin
+  cat << EOF > BUILD
+java_runtime(
+    name = "foo_javabase",
+    java_home = "$PWD/foo",
+    visibility = ["//visibility:public"],
+)
+
+java_runtime(
+    name = "bar_runtime",
+    visibility = ["//visibility:public"],
+    srcs = ["bar/bin/java"],
+)
+
+genrule(
+    name = "without_java",
+    srcs = ["in"],
+    outs = ["out_without"],
+    cmd = "cat \$(SRCS) > \$(OUTS)",
+)
+
+genrule(
+    name = "with_java",
+    srcs = ["in"],
+    outs = ["out_with"],
+    cmd = "echo \$(JAVA) > \$(OUTS)",
+    toolchains = [":bar_runtime"],
+)
+EOF
+
+  bazel cquery --implicit_deps 'deps(//:without_java)' >& $TEST_log
+  expect_not_log "foo"
+  expect_not_log "bar"
+  expect_not_log "embedded_jdk"
+
+  bazel cquery --implicit_deps 'deps(//:with_java)' >& $TEST_log
+  expect_not_log "foo"
+  expect_log "bar"
+  expect_log "embedded_jdk"
+
+  bazel cquery --implicit_deps 'deps(//:with_java)' --host_javabase=:foo_javabase >& $TEST_log
+  expect_log "foo"
+  expect_log "bar"
+  expect_not_log "embedded_jdk"
 }
 
 run_suite "Tests of specifying custom server_javabase/host_javabase and javabase."

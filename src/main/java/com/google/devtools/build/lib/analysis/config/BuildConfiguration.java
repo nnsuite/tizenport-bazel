@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MutableClassToInstanceMap;
@@ -589,7 +588,20 @@ public class BuildConfiguration implements BuildConfigurationApi {
     )
     public boolean experimentalJavaCoverage;
 
-
+    @Option(
+        name = "experimental_cc_coverage",
+        defaultValue = "false",
+        documentationCategory = OptionDocumentationCategory.OUTPUT_PARAMETERS,
+        effectTags = {
+          OptionEffectTag.CHANGES_INPUTS,
+          OptionEffectTag.AFFECTS_OUTPUTS,
+          OptionEffectTag.LOADING_AND_ANALYSIS
+        },
+        metadataTags = {OptionMetadataTag.EXPERIMENTAL},
+        help =
+            "If specified, Bazel will use gcov to collect code coverage for C++ test targets. "
+                + "This option only works for gcc compilation.")
+    public boolean useGcovCoverage;
 
     @Option(
       name = "build_runfile_manifests",
@@ -891,18 +903,6 @@ public class BuildConfiguration implements BuildConfigurationApi {
     public TriState enableRunfiles;
 
     @Option(
-      name = "windows_exe_launcher",
-      defaultValue = "true",
-      documentationCategory = OptionDocumentationCategory.UNDOCUMENTED,
-      effectTags = { OptionEffectTag.CHANGES_INPUTS, OptionEffectTag.AFFECTS_OUTPUTS },
-      deprecationWarning = "This flag is no longer supported and will go away soon.",
-      help =
-          "Build a Windows exe launcher for sh_binary rule, "
-              + "it has no effect on other platforms than Windows"
-    )
-    public boolean windowsExeLauncher;
-
-    @Option(
         name = "modify_execution_info",
         converter = ExecutionInfoModifier.Converter.class,
         documentationCategory = OptionDocumentationCategory.EXECUTION_STRATEGY,
@@ -911,7 +911,7 @@ public class BuildConfiguration implements BuildConfigurationApi {
           OptionEffectTag.AFFECTS_OUTPUTS,
           OptionEffectTag.LOADING_AND_ANALYSIS,
         },
-        defaultValue = "null",
+        defaultValue = "",
         help =
             "Add or remove keys from an action's execution info based on action mnemonic.  "
                 + "Applies only to actions which support execution info. Many common actions "
@@ -937,7 +937,6 @@ public class BuildConfiguration implements BuildConfigurationApi {
       host.isHost = true;
       host.configsMode = configsMode;
       host.enableRunfiles = enableRunfiles;
-      host.windowsExeLauncher = windowsExeLauncher;
       host.executionInfoModifier = executionInfoModifier;
       host.commandLineBuildVariables = commandLineBuildVariables;
       host.enforceConstraints = enforceConstraints;
@@ -1055,20 +1054,15 @@ public class BuildConfiguration implements BuildConfigurationApi {
       Path outputDir = execRoot.getRelative(directories.getRelativeOutputPath())
           .getRelative(outputDirName);
       if (middleman) {
-        return INTERNER.intern(ArtifactRoot.middlemanRoot(execRoot, outputDir));
+        return ArtifactRoot.middlemanRoot(execRoot, outputDir);
       }
       // e.g., [[execroot/repo1]/bazel-out/config/bin]
-      return INTERNER.intern(
-          ArtifactRoot.asDerivedRoot(execRoot, outputDir.getRelative(nameFragment)));
+      return ArtifactRoot.asDerivedRoot(execRoot, outputDir.getRelative(nameFragment));
     }
   }
 
   private final BlazeDirectories directories;
   private final String outputDirName;
-
-  // We intern the roots for non-main repositories, so we don't keep around thousands of copies of
-  // the same root.
-  private static Interner<ArtifactRoot> INTERNER = Interners.newWeakInterner();
 
   // We precompute the roots for the main repository, since that's the common case.
   private final ArtifactRoot outputDirectoryForMainRepository;
@@ -1738,6 +1732,10 @@ public class BuildConfiguration implements BuildConfigurationApi {
     return options.experimentalJavaCoverage;
   }
 
+  public boolean useGcovCoverage() {
+    return options.useGcovCoverage;
+  }
+
   public RunUnder getRunUnder() {
     return options.runUnder;
   }
@@ -1837,29 +1835,23 @@ public class BuildConfiguration implements BuildConfigurationApi {
     }
   }
 
-  public boolean enableWindowsExeLauncher() {
-    return options.windowsExeLauncher;
-  }
-
   /**
    * Returns a modified copy of {@code executionInfo} if any {@code executionInfoModifiers} apply to
    * the given {@code mnemonic}. Otherwise returns {@code executionInfo} unchanged.
    */
   public ImmutableMap<String, String> modifiedExecutionInfo(
       ImmutableMap<String, String> executionInfo, String mnemonic) {
-    if (options.executionInfoModifier == null || !options.executionInfoModifier.matches(mnemonic)) {
+    if (!options.executionInfoModifier.matches(mnemonic)) {
       return executionInfo;
     }
-    HashMap<String, String> mutableCopy = new HashMap<>(executionInfo);
+    LinkedHashMap<String, String> mutableCopy = new LinkedHashMap<>(executionInfo);
     modifyExecutionInfo(mutableCopy, mnemonic);
     return ImmutableMap.copyOf(mutableCopy);
   }
 
   /** Applies {@code executionInfoModifiers} to the given {@code executionInfo}. */
   public void modifyExecutionInfo(Map<String, String> executionInfo, String mnemonic) {
-    if (options.executionInfoModifier != null) {
-      options.executionInfoModifier.apply(mnemonic, executionInfo);
-    }
+    options.executionInfoModifier.apply(mnemonic, executionInfo);
   }
 
   /** @return the list of default features used for all packages. */

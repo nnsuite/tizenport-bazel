@@ -35,20 +35,29 @@ filegroup(
 
 filegroup(
     name = "coverage_report_generator",
-    srcs = ["@bazel_tools//tools/test/LcovMerger/java/com/google/devtools/lcovmerger:Main"],
+    srcs = ["@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main"],
 )
 
+# Test wrapper binary to run tests on Windows.
+# See https://github.com/bazelbuild/bazel/issues/5508
 cc_binary(
-    name = "test_wrapper_bin",
+    name = "tw",
     srcs = select({
         "@bazel_tools//src/conditions:windows": ["windows/test_wrapper.cc"],
         "//conditions:default": ["empty_test_wrapper.cc"],
+    }),
+    linkopts = select({
+        "//src/conditions:windows": [
+            "-DEFAULTLIB:advapi32.lib",  # GetUserNameW
+        ],
+        "//conditions:default": [],
     }),
     visibility = ["//visibility:private"],
     deps = select({
         "@bazel_tools//src/conditions:windows": [
             "//src/main/cpp/util:filesystem",
             "//src/main/cpp/util:strings",
+            "//src/main/native/windows:lib-file",
             "@bazel_tools//tools/cpp/runfiles",
         ],
         "//conditions:default": [],
@@ -69,7 +78,7 @@ filegroup(
         "collect_coverage.sh",
         "collect_cc_coverage.sh",
     ] + glob(["LcovMerger/**"]) + select({
-        "@bazel_tools//src/conditions:windows": ["test_wrapper_bin"],
+        "@bazel_tools//src/conditions:windows": ["tw"],
         "//conditions:default": [],
     }),
     visibility = ["//tools:__pkg__"],
@@ -88,7 +97,7 @@ test_suite(
     name = "all_windows_tests",
     tests = [
         ":windows_tests",
-        "//tools/test/LcovMerger/javatests/com/google/devtools/lcovmerger:all_windows_tests",
+        "//tools/test/CoverageOutputGenerator/javatests/com/google/devtools/coverageoutputgenerator:all_windows_tests",
     ],
     visibility = ["//tools:__pkg__"],
 )

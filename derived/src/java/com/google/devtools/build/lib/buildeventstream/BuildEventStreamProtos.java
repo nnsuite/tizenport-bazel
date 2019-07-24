@@ -20266,6 +20266,15 @@ public final class BuildEventStreamProtos {
      */
     com.google.protobuf.ByteString
         getWorkspaceDirectoryBytes();
+
+    /**
+     * <pre>
+     * The process ID of the Bazel server.
+     * </pre>
+     *
+     * <code>int64 server_pid = 8;</code>
+     */
+    long getServerPid();
   }
   /**
    * <pre>
@@ -20295,6 +20304,7 @@ public final class BuildEventStreamProtos {
       command_ = "";
       workingDirectory_ = "";
       workspaceDirectory_ = "";
+      serverPid_ = 0L;
     }
 
     @java.lang.Override
@@ -20360,6 +20370,11 @@ public final class BuildEventStreamProtos {
               java.lang.String s = input.readStringRequireUtf8();
 
               workspaceDirectory_ = s;
+              break;
+            }
+            case 64: {
+
+              serverPid_ = input.readInt64();
               break;
             }
             default: {
@@ -20653,6 +20668,19 @@ public final class BuildEventStreamProtos {
       }
     }
 
+    public static final int SERVER_PID_FIELD_NUMBER = 8;
+    private long serverPid_;
+    /**
+     * <pre>
+     * The process ID of the Bazel server.
+     * </pre>
+     *
+     * <code>int64 server_pid = 8;</code>
+     */
+    public long getServerPid() {
+      return serverPid_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -20688,6 +20716,9 @@ public final class BuildEventStreamProtos {
       if (!getWorkspaceDirectoryBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 7, workspaceDirectory_);
       }
+      if (serverPid_ != 0L) {
+        output.writeInt64(8, serverPid_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -20719,6 +20750,10 @@ public final class BuildEventStreamProtos {
       if (!getWorkspaceDirectoryBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, workspaceDirectory_);
       }
+      if (serverPid_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(8, serverPid_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -20749,6 +20784,8 @@ public final class BuildEventStreamProtos {
           .equals(other.getWorkingDirectory());
       result = result && getWorkspaceDirectory()
           .equals(other.getWorkspaceDirectory());
+      result = result && (getServerPid()
+          == other.getServerPid());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -20775,6 +20812,9 @@ public final class BuildEventStreamProtos {
       hash = (53 * hash) + getWorkingDirectory().hashCode();
       hash = (37 * hash) + WORKSPACE_DIRECTORY_FIELD_NUMBER;
       hash = (53 * hash) + getWorkspaceDirectory().hashCode();
+      hash = (37 * hash) + SERVER_PID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getServerPid());
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -20930,6 +20970,8 @@ public final class BuildEventStreamProtos {
 
         workspaceDirectory_ = "";
 
+        serverPid_ = 0L;
+
         return this;
       }
 
@@ -20963,6 +21005,7 @@ public final class BuildEventStreamProtos {
         result.command_ = command_;
         result.workingDirectory_ = workingDirectory_;
         result.workspaceDirectory_ = workspaceDirectory_;
+        result.serverPid_ = serverPid_;
         onBuilt();
         return result;
       }
@@ -21037,6 +21080,9 @@ public final class BuildEventStreamProtos {
         if (!other.getWorkspaceDirectory().isEmpty()) {
           workspaceDirectory_ = other.workspaceDirectory_;
           onChanged();
+        }
+        if (other.getServerPid() != 0L) {
+          setServerPid(other.getServerPid());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -21621,6 +21667,44 @@ public final class BuildEventStreamProtos {
   checkByteStringIsUtf8(value);
         
         workspaceDirectory_ = value;
+        onChanged();
+        return this;
+      }
+
+      private long serverPid_ ;
+      /**
+       * <pre>
+       * The process ID of the Bazel server.
+       * </pre>
+       *
+       * <code>int64 server_pid = 8;</code>
+       */
+      public long getServerPid() {
+        return serverPid_;
+      }
+      /**
+       * <pre>
+       * The process ID of the Bazel server.
+       * </pre>
+       *
+       * <code>int64 server_pid = 8;</code>
+       */
+      public Builder setServerPid(long value) {
+        
+        serverPid_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * The process ID of the Bazel server.
+       * </pre>
+       *
+       * <code>int64 server_pid = 8;</code>
+       */
+      public Builder clearServerPid() {
+        
+        serverPid_ = 0L;
         onChanged();
         return this;
       }
@@ -52891,129 +52975,130 @@ public final class BuildEventStreamProtos {
       "\022\016\n\nNO_ANALYZE\020\010\022\014\n\010NO_BUILD\020\t\022\014\n\010TIME_O" +
       "UT\020\002\022\036\n\032REMOTE_ENVIRONMENT_FAILURE\020\003\022\014\n\010" +
       "INTERNAL\020\004\022\023\n\017LOADING_FAILURE\020\005\022\024\n\020ANALY" +
-      "SIS_FAILURE\020\006\022\013\n\007SKIPPED\020\007\"\271\001\n\014BuildStar" +
+      "SIS_FAILURE\020\006\022\013\n\007SKIPPED\020\007\"\315\001\n\014BuildStar" +
       "ted\022\014\n\004uuid\030\001 \001(\t\022\031\n\021start_time_millis\030\002" +
       " \001(\003\022\032\n\022build_tool_version\030\003 \001(\t\022\033\n\023opti" +
       "ons_description\030\004 \001(\t\022\017\n\007command\030\005 \001(\t\022\031" +
       "\n\021working_directory\030\006 \001(\t\022\033\n\023workspace_d" +
-      "irectory\030\007 \001(\t\"\'\n\027UnstructuredCommandLin" +
-      "e\022\014\n\004args\030\001 \003(\t\"\317\001\n\rOptionsParsed\022\027\n\017sta" +
-      "rtup_options\030\001 \003(\t\022 \n\030explicit_startup_o" +
-      "ptions\030\002 \003(\t\022\020\n\010cmd_line\030\003 \003(\t\022\031\n\021explic" +
-      "it_cmd_line\030\004 \003(\t\022D\n\021invocation_policy\030\005" +
-      " \001(\0132).blaze.invocation_policy.Invocatio" +
-      "nPolicy\022\020\n\010tool_tag\030\006 \001(\t\"\030\n\005Fetch\022\017\n\007su" +
-      "ccess\030\001 \001(\010\"m\n\017WorkspaceStatus\0226\n\004item\030\001" +
-      " \003(\0132(.build_event_stream.WorkspaceStatu" +
-      "s.Item\032\"\n\004Item\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001" +
-      "(\t\"\306\001\n\rConfiguration\022\020\n\010mnemonic\030\001 \001(\t\022\025" +
-      "\n\rplatform_name\030\002 \001(\t\022\013\n\003cpu\030\003 \001(\t\022J\n\rma" +
-      "ke_variable\030\004 \003(\01323.build_event_stream.C" +
-      "onfiguration.MakeVariableEntry\0323\n\021MakeVa" +
-      "riableEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:" +
-      "\0028\001\"\021\n\017PatternExpanded\"e\n\020TargetConfigur" +
-      "ed\022\023\n\013target_kind\030\001 \001(\t\022/\n\ttest_size\030\002 \001" +
-      "(\0162\034.build_event_stream.TestSize\022\013\n\003tag\030" +
-      "\003 \003(\t\"?\n\004File\022\014\n\004name\030\001 \001(\t\022\r\n\003uri\030\002 \001(\t" +
-      "H\000\022\022\n\010contents\030\003 \001(\014H\000B\006\n\004file\"\201\001\n\017Named" +
-      "SetOfFiles\022\'\n\005files\030\001 \003(\0132\030.build_event_" +
-      "stream.File\022E\n\tfile_sets\030\002 \003(\01322.build_e" +
-      "vent_stream.BuildEventId.NamedSetOfFiles" +
-      "Id\"\276\002\n\016ActionExecuted\022\017\n\007success\030\001 \001(\010\022\014" +
-      "\n\004type\030\010 \001(\t\022\021\n\texit_code\030\002 \001(\005\022(\n\006stdou" +
-      "t\030\003 \001(\0132\030.build_event_stream.File\022(\n\006std" +
-      "err\030\004 \001(\0132\030.build_event_stream.File\022\021\n\005l" +
-      "abel\030\005 \001(\tB\002\030\001\022K\n\rconfiguration\030\007 \001(\01320." +
-      "build_event_stream.BuildEventId.Configur" +
-      "ationIdB\002\030\001\0220\n\016primary_output\030\006 \001(\0132\030.bu" +
-      "ild_event_stream.File\022\024\n\014command_line\030\t " +
-      "\003(\t\"h\n\013OutputGroup\022\014\n\004name\030\001 \001(\t\022E\n\tfile" +
-      "_sets\030\003 \003(\01322.build_event_stream.BuildEv" +
-      "entId.NamedSetOfFilesIdJ\004\010\002\020\003\"\211\002\n\016Target" +
-      "Complete\022\017\n\007success\030\001 \001(\010\022\027\n\013target_kind" +
-      "\030\005 \001(\tB\002\030\001\0223\n\ttest_size\030\006 \001(\0162\034.build_ev" +
-      "ent_stream.TestSizeB\002\030\001\0225\n\014output_group\030" +
-      "\002 \003(\0132\037.build_event_stream.OutputGroup\0226" +
-      "\n\020important_output\030\004 \003(\0132\030.build_event_s" +
-      "tream.FileB\002\030\001\022\013\n\003tag\030\003 \003(\t\022\034\n\024test_time" +
-      "out_seconds\030\007 \001(\003\"\253\006\n\nTestResult\022.\n\006stat" +
-      "us\030\005 \001(\0162\036.build_event_stream.TestStatus" +
-      "\022\026\n\016status_details\030\t \001(\t\022\026\n\016cached_local" +
-      "ly\030\004 \001(\010\022\'\n\037test_attempt_start_millis_ep" +
-      "och\030\006 \001(\003\022$\n\034test_attempt_duration_milli" +
-      "s\030\003 \001(\003\0224\n\022test_action_output\030\002 \003(\0132\030.bu" +
-      "ild_event_stream.File\022\017\n\007warning\030\007 \003(\t\022D" +
-      "\n\016execution_info\030\010 \001(\0132,.build_event_str" +
-      "eam.TestResult.ExecutionInfo\032\332\003\n\rExecuti" +
-      "onInfo\022\033\n\017timeout_seconds\030\001 \001(\005B\002\030\001\022\020\n\010s" +
-      "trategy\030\002 \001(\t\022\027\n\017cached_remotely\030\006 \001(\010\022\021" +
-      "\n\texit_code\030\007 \001(\005\022\020\n\010hostname\030\003 \001(\t\022V\n\020t" +
-      "iming_breakdown\030\004 \001(\0132<.build_event_stre" +
-      "am.TestResult.ExecutionInfo.TimingBreakd" +
-      "own\022R\n\016resource_usage\030\005 \003(\0132:.build_even" +
-      "t_stream.TestResult.ExecutionInfo.Resour" +
-      "ceUsage\032\201\001\n\017TimingBreakdown\022K\n\005child\030\001 \003" +
-      "(\0132<.build_event_stream.TestResult.Execu" +
-      "tionInfo.TimingBreakdown\022\014\n\004name\030\002 \001(\t\022\023" +
-      "\n\013time_millis\030\003 \001(\003\032,\n\rResourceUsage\022\014\n\004" +
-      "name\030\001 \001(\t\022\r\n\005value\030\002 \001(\003J\004\010\001\020\002\"\314\001\n\013Test" +
-      "Summary\0226\n\016overall_status\030\005 \001(\0162\036.build_" +
-      "event_stream.TestStatus\022\027\n\017total_run_cou" +
-      "nt\030\001 \001(\005\022(\n\006passed\030\003 \003(\0132\030.build_event_s" +
-      "tream.File\022(\n\006failed\030\004 \003(\0132\030.build_event" +
-      "_stream.File\022\030\n\020total_num_cached\030\006 \001(\005\"\257" +
-      "\001\n\rBuildFinished\022\033\n\017overall_success\030\001 \001(" +
-      "\010B\002\030\001\022=\n\texit_code\030\003 \001(\0132*.build_event_s" +
-      "tream.BuildFinished.ExitCode\022\032\n\022finish_t" +
-      "ime_millis\030\002 \001(\003\032&\n\010ExitCode\022\014\n\004name\030\001 \001" +
-      "(\t\022\014\n\004code\030\002 \001(\005\"\374\001\n\014BuildMetrics\022F\n\016act" +
-      "ion_summary\030\001 \001(\0132..build_event_stream.B" +
-      "uildMetrics.ActionSummary\022F\n\016memory_metr" +
-      "ics\030\002 \001(\0132..build_event_stream.BuildMetr" +
-      "ics.MemoryMetrics\032(\n\rActionSummary\022\027\n\017ac" +
-      "tions_created\030\001 \001(\003\0322\n\rMemoryMetrics\022!\n\031" +
-      "used_heap_size_post_build\030\001 \001(\003\"6\n\rBuild" +
-      "ToolLogs\022%\n\003log\030\001 \003(\0132\030.build_event_stre" +
-      "am.File\"\357\t\n\nBuildEvent\022,\n\002id\030\001 \001(\0132 .bui" +
-      "ld_event_stream.BuildEventId\0222\n\010children" +
-      "\030\002 \003(\0132 .build_event_stream.BuildEventId" +
-      "\022\024\n\014last_message\030\024 \001(\010\0220\n\010progress\030\003 \001(\013" +
-      "2\034.build_event_stream.ProgressH\000\022.\n\007abor" +
-      "ted\030\004 \001(\0132\033.build_event_stream.AbortedH\000" +
-      "\0223\n\007started\030\005 \001(\0132 .build_event_stream.B" +
-      "uildStartedH\000\022P\n\031unstructured_command_li" +
-      "ne\030\014 \001(\0132+.build_event_stream.Unstructur" +
-      "edCommandLineH\000\022<\n\027structured_command_li" +
-      "ne\030\026 \001(\0132\031.command_line.CommandLineH\000\022;\n" +
-      "\016options_parsed\030\r \001(\0132!.build_event_stre" +
-      "am.OptionsParsedH\000\022?\n\020workspace_status\030\020" +
-      " \001(\0132#.build_event_stream.WorkspaceStatu" +
-      "sH\000\022*\n\005fetch\030\025 \001(\0132\031.build_event_stream." +
-      "FetchH\000\022:\n\rconfiguration\030\021 \001(\0132!.build_e" +
-      "vent_stream.ConfigurationH\000\0227\n\010expanded\030" +
-      "\006 \001(\0132#.build_event_stream.PatternExpand" +
-      "edH\000\022:\n\nconfigured\030\022 \001(\0132$.build_event_s" +
-      "tream.TargetConfiguredH\000\0224\n\006action\030\007 \001(\013" +
-      "2\".build_event_stream.ActionExecutedH\000\022A" +
-      "\n\022named_set_of_files\030\017 \001(\0132#.build_event" +
-      "_stream.NamedSetOfFilesH\000\0227\n\tcompleted\030\010" +
-      " \001(\0132\".build_event_stream.TargetComplete" +
-      "H\000\0225\n\013test_result\030\n \001(\0132\036.build_event_st" +
-      "ream.TestResultH\000\0227\n\014test_summary\030\t \001(\0132" +
-      "\037.build_event_stream.TestSummaryH\000\0225\n\010fi" +
-      "nished\030\016 \001(\0132!.build_event_stream.BuildF" +
-      "inishedH\000\022<\n\017build_tool_logs\030\027 \001(\0132!.bui" +
-      "ld_event_stream.BuildToolLogsH\000\0229\n\rbuild" +
-      "_metrics\030\030 \001(\0132 .build_event_stream.Buil" +
-      "dMetricsH\000B\t\n\007payloadJ\004\010\013\020\014J\004\010\023\020\024*G\n\010Tes" +
-      "tSize\022\013\n\007UNKNOWN\020\000\022\t\n\005SMALL\020\001\022\n\n\006MEDIUM\020" +
-      "\002\022\t\n\005LARGE\020\003\022\014\n\010ENORMOUS\020\004*\244\001\n\nTestStatu" +
-      "s\022\r\n\tNO_STATUS\020\000\022\n\n\006PASSED\020\001\022\t\n\005FLAKY\020\002\022" +
-      "\013\n\007TIMEOUT\020\003\022\n\n\006FAILED\020\004\022\016\n\nINCOMPLETE\020\005" +
-      "\022\022\n\016REMOTE_FAILURE\020\006\022\023\n\017FAILED_TO_BUILD\020" +
-      "\007\022\036\n\032TOOL_HALTED_BEFORE_TESTING\020\010BH\n.com" +
-      ".google.devtools.build.lib.buildeventstr" +
-      "eamB\026BuildEventStreamProtosb\006proto3"
+      "irectory\030\007 \001(\t\022\022\n\nserver_pid\030\010 \001(\003\"\'\n\027Un" +
+      "structuredCommandLine\022\014\n\004args\030\001 \003(\t\"\317\001\n\r" +
+      "OptionsParsed\022\027\n\017startup_options\030\001 \003(\t\022 " +
+      "\n\030explicit_startup_options\030\002 \003(\t\022\020\n\010cmd_" +
+      "line\030\003 \003(\t\022\031\n\021explicit_cmd_line\030\004 \003(\t\022D\n" +
+      "\021invocation_policy\030\005 \001(\0132).blaze.invocat" +
+      "ion_policy.InvocationPolicy\022\020\n\010tool_tag\030" +
+      "\006 \001(\t\"\030\n\005Fetch\022\017\n\007success\030\001 \001(\010\"m\n\017Works" +
+      "paceStatus\0226\n\004item\030\001 \003(\0132(.build_event_s" +
+      "tream.WorkspaceStatus.Item\032\"\n\004Item\022\013\n\003ke" +
+      "y\030\001 \001(\t\022\r\n\005value\030\002 \001(\t\"\306\001\n\rConfiguration" +
+      "\022\020\n\010mnemonic\030\001 \001(\t\022\025\n\rplatform_name\030\002 \001(" +
+      "\t\022\013\n\003cpu\030\003 \001(\t\022J\n\rmake_variable\030\004 \003(\01323." +
+      "build_event_stream.Configuration.MakeVar" +
+      "iableEntry\0323\n\021MakeVariableEntry\022\013\n\003key\030\001" +
+      " \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\021\n\017PatternExpand" +
+      "ed\"e\n\020TargetConfigured\022\023\n\013target_kind\030\001 " +
+      "\001(\t\022/\n\ttest_size\030\002 \001(\0162\034.build_event_str" +
+      "eam.TestSize\022\013\n\003tag\030\003 \003(\t\"?\n\004File\022\014\n\004nam" +
+      "e\030\001 \001(\t\022\r\n\003uri\030\002 \001(\tH\000\022\022\n\010contents\030\003 \001(\014" +
+      "H\000B\006\n\004file\"\201\001\n\017NamedSetOfFiles\022\'\n\005files\030" +
+      "\001 \003(\0132\030.build_event_stream.File\022E\n\tfile_" +
+      "sets\030\002 \003(\01322.build_event_stream.BuildEve" +
+      "ntId.NamedSetOfFilesId\"\276\002\n\016ActionExecute" +
+      "d\022\017\n\007success\030\001 \001(\010\022\014\n\004type\030\010 \001(\t\022\021\n\texit" +
+      "_code\030\002 \001(\005\022(\n\006stdout\030\003 \001(\0132\030.build_even" +
+      "t_stream.File\022(\n\006stderr\030\004 \001(\0132\030.build_ev" +
+      "ent_stream.File\022\021\n\005label\030\005 \001(\tB\002\030\001\022K\n\rco" +
+      "nfiguration\030\007 \001(\01320.build_event_stream.B" +
+      "uildEventId.ConfigurationIdB\002\030\001\0220\n\016prima" +
+      "ry_output\030\006 \001(\0132\030.build_event_stream.Fil" +
+      "e\022\024\n\014command_line\030\t \003(\t\"h\n\013OutputGroup\022\014" +
+      "\n\004name\030\001 \001(\t\022E\n\tfile_sets\030\003 \003(\01322.build_" +
+      "event_stream.BuildEventId.NamedSetOfFile" +
+      "sIdJ\004\010\002\020\003\"\211\002\n\016TargetComplete\022\017\n\007success\030" +
+      "\001 \001(\010\022\027\n\013target_kind\030\005 \001(\tB\002\030\001\0223\n\ttest_s" +
+      "ize\030\006 \001(\0162\034.build_event_stream.TestSizeB" +
+      "\002\030\001\0225\n\014output_group\030\002 \003(\0132\037.build_event_" +
+      "stream.OutputGroup\0226\n\020important_output\030\004" +
+      " \003(\0132\030.build_event_stream.FileB\002\030\001\022\013\n\003ta" +
+      "g\030\003 \003(\t\022\034\n\024test_timeout_seconds\030\007 \001(\003\"\253\006" +
+      "\n\nTestResult\022.\n\006status\030\005 \001(\0162\036.build_eve" +
+      "nt_stream.TestStatus\022\026\n\016status_details\030\t" +
+      " \001(\t\022\026\n\016cached_locally\030\004 \001(\010\022\'\n\037test_att" +
+      "empt_start_millis_epoch\030\006 \001(\003\022$\n\034test_at" +
+      "tempt_duration_millis\030\003 \001(\003\0224\n\022test_acti" +
+      "on_output\030\002 \003(\0132\030.build_event_stream.Fil" +
+      "e\022\017\n\007warning\030\007 \003(\t\022D\n\016execution_info\030\010 \001" +
+      "(\0132,.build_event_stream.TestResult.Execu" +
+      "tionInfo\032\332\003\n\rExecutionInfo\022\033\n\017timeout_se" +
+      "conds\030\001 \001(\005B\002\030\001\022\020\n\010strategy\030\002 \001(\t\022\027\n\017cac" +
+      "hed_remotely\030\006 \001(\010\022\021\n\texit_code\030\007 \001(\005\022\020\n" +
+      "\010hostname\030\003 \001(\t\022V\n\020timing_breakdown\030\004 \001(" +
+      "\0132<.build_event_stream.TestResult.Execut" +
+      "ionInfo.TimingBreakdown\022R\n\016resource_usag" +
+      "e\030\005 \003(\0132:.build_event_stream.TestResult." +
+      "ExecutionInfo.ResourceUsage\032\201\001\n\017TimingBr" +
+      "eakdown\022K\n\005child\030\001 \003(\0132<.build_event_str" +
+      "eam.TestResult.ExecutionInfo.TimingBreak" +
+      "down\022\014\n\004name\030\002 \001(\t\022\023\n\013time_millis\030\003 \001(\003\032" +
+      ",\n\rResourceUsage\022\014\n\004name\030\001 \001(\t\022\r\n\005value\030" +
+      "\002 \001(\003J\004\010\001\020\002\"\314\001\n\013TestSummary\0226\n\016overall_s" +
+      "tatus\030\005 \001(\0162\036.build_event_stream.TestSta" +
+      "tus\022\027\n\017total_run_count\030\001 \001(\005\022(\n\006passed\030\003" +
+      " \003(\0132\030.build_event_stream.File\022(\n\006failed" +
+      "\030\004 \003(\0132\030.build_event_stream.File\022\030\n\020tota" +
+      "l_num_cached\030\006 \001(\005\"\257\001\n\rBuildFinished\022\033\n\017" +
+      "overall_success\030\001 \001(\010B\002\030\001\022=\n\texit_code\030\003" +
+      " \001(\0132*.build_event_stream.BuildFinished." +
+      "ExitCode\022\032\n\022finish_time_millis\030\002 \001(\003\032&\n\010" +
+      "ExitCode\022\014\n\004name\030\001 \001(\t\022\014\n\004code\030\002 \001(\005\"\374\001\n" +
+      "\014BuildMetrics\022F\n\016action_summary\030\001 \001(\0132.." +
+      "build_event_stream.BuildMetrics.ActionSu" +
+      "mmary\022F\n\016memory_metrics\030\002 \001(\0132..build_ev" +
+      "ent_stream.BuildMetrics.MemoryMetrics\032(\n" +
+      "\rActionSummary\022\027\n\017actions_created\030\001 \001(\003\032" +
+      "2\n\rMemoryMetrics\022!\n\031used_heap_size_post_" +
+      "build\030\001 \001(\003\"6\n\rBuildToolLogs\022%\n\003log\030\001 \003(" +
+      "\0132\030.build_event_stream.File\"\357\t\n\nBuildEve" +
+      "nt\022,\n\002id\030\001 \001(\0132 .build_event_stream.Buil" +
+      "dEventId\0222\n\010children\030\002 \003(\0132 .build_event" +
+      "_stream.BuildEventId\022\024\n\014last_message\030\024 \001" +
+      "(\010\0220\n\010progress\030\003 \001(\0132\034.build_event_strea" +
+      "m.ProgressH\000\022.\n\007aborted\030\004 \001(\0132\033.build_ev" +
+      "ent_stream.AbortedH\000\0223\n\007started\030\005 \001(\0132 ." +
+      "build_event_stream.BuildStartedH\000\022P\n\031uns" +
+      "tructured_command_line\030\014 \001(\0132+.build_eve" +
+      "nt_stream.UnstructuredCommandLineH\000\022<\n\027s" +
+      "tructured_command_line\030\026 \001(\0132\031.command_l" +
+      "ine.CommandLineH\000\022;\n\016options_parsed\030\r \001(" +
+      "\0132!.build_event_stream.OptionsParsedH\000\022?" +
+      "\n\020workspace_status\030\020 \001(\0132#.build_event_s" +
+      "tream.WorkspaceStatusH\000\022*\n\005fetch\030\025 \001(\0132\031" +
+      ".build_event_stream.FetchH\000\022:\n\rconfigura" +
+      "tion\030\021 \001(\0132!.build_event_stream.Configur" +
+      "ationH\000\0227\n\010expanded\030\006 \001(\0132#.build_event_" +
+      "stream.PatternExpandedH\000\022:\n\nconfigured\030\022" +
+      " \001(\0132$.build_event_stream.TargetConfigur" +
+      "edH\000\0224\n\006action\030\007 \001(\0132\".build_event_strea" +
+      "m.ActionExecutedH\000\022A\n\022named_set_of_files" +
+      "\030\017 \001(\0132#.build_event_stream.NamedSetOfFi" +
+      "lesH\000\0227\n\tcompleted\030\010 \001(\0132\".build_event_s" +
+      "tream.TargetCompleteH\000\0225\n\013test_result\030\n " +
+      "\001(\0132\036.build_event_stream.TestResultH\000\0227\n" +
+      "\014test_summary\030\t \001(\0132\037.build_event_stream" +
+      ".TestSummaryH\000\0225\n\010finished\030\016 \001(\0132!.build" +
+      "_event_stream.BuildFinishedH\000\022<\n\017build_t" +
+      "ool_logs\030\027 \001(\0132!.build_event_stream.Buil" +
+      "dToolLogsH\000\0229\n\rbuild_metrics\030\030 \001(\0132 .bui" +
+      "ld_event_stream.BuildMetricsH\000B\t\n\007payloa" +
+      "dJ\004\010\013\020\014J\004\010\023\020\024*G\n\010TestSize\022\013\n\007UNKNOWN\020\000\022\t" +
+      "\n\005SMALL\020\001\022\n\n\006MEDIUM\020\002\022\t\n\005LARGE\020\003\022\014\n\010ENOR" +
+      "MOUS\020\004*\244\001\n\nTestStatus\022\r\n\tNO_STATUS\020\000\022\n\n\006" +
+      "PASSED\020\001\022\t\n\005FLAKY\020\002\022\013\n\007TIMEOUT\020\003\022\n\n\006FAIL" +
+      "ED\020\004\022\016\n\nINCOMPLETE\020\005\022\022\n\016REMOTE_FAILURE\020\006" +
+      "\022\023\n\017FAILED_TO_BUILD\020\007\022\036\n\032TOOL_HALTED_BEF" +
+      "ORE_TESTING\020\010BH\n.com.google.devtools.bui" +
+      "ld.lib.buildeventstreamB\026BuildEventStrea" +
+      "mProtosb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -53178,7 +53263,7 @@ public final class BuildEventStreamProtos {
     internal_static_build_event_stream_BuildStarted_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_build_event_stream_BuildStarted_descriptor,
-        new java.lang.String[] { "Uuid", "StartTimeMillis", "BuildToolVersion", "OptionsDescription", "Command", "WorkingDirectory", "WorkspaceDirectory", });
+        new java.lang.String[] { "Uuid", "StartTimeMillis", "BuildToolVersion", "OptionsDescription", "Command", "WorkingDirectory", "WorkspaceDirectory", "ServerPid", });
     internal_static_build_event_stream_UnstructuredCommandLine_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_build_event_stream_UnstructuredCommandLine_fieldAccessorTable = new

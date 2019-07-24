@@ -109,8 +109,8 @@ public final class CcToolchainRule implements RuleDefinition {
         .requiresConfigurationFragments(CppConfiguration.class, PlatformConfiguration.class)
         .advertiseProvider(TemplateVariableInfo.class)
         .add(attr("output_licenses", LICENSE))
-        .add(attr("cpu", STRING).mandatory())
-        .add(attr("compiler", STRING))
+        .add(attr("cpu", STRING).nonconfigurable("Used in configuration creation").mandatory())
+        .add(attr("compiler", STRING).nonconfigurable("Used in configuration creation"))
         .add(
             attr("all_files", LABEL)
                 .legacyAllowAnyFileType()
@@ -180,7 +180,7 @@ public final class CcToolchainRule implements RuleDefinition {
         // TODO(b/78578234): Make this the default and remove the late-bound versions.
         .add(attr("libc_top", LABEL).allowedFileTypes())
         .add(attr(LIBC_TOP_ATTR, LABEL).value(LIBC_TOP_VALUE))
-        .add(attr(FDO_OPTIMIZE_ATTR, LABEL).singleArtifact().value(FDO_OPTIMIZE_VALUE))
+        .add(attr(FDO_OPTIMIZE_ATTR, LABEL).value(FDO_OPTIMIZE_VALUE))
         .add(
             attr(FDO_PROFILE_ATTR, LABEL)
                 .allowedRuleClasses("fdo_profile")

@@ -34,6 +34,7 @@ import com.google.devtools.build.lib.actions.ArtifactPathResolver;
 import com.google.devtools.build.lib.actions.ArtifactSkyKey;
 import com.google.devtools.build.lib.actions.FileArtifactValue;
 import com.google.devtools.build.lib.actions.FilesetOutputSymlink;
+import com.google.devtools.build.lib.actions.MetadataProvider;
 import com.google.devtools.build.lib.actions.MissingDepException;
 import com.google.devtools.build.lib.actions.MissingInputFileException;
 import com.google.devtools.build.lib.actions.NotifyOnActionCacheHit;
@@ -379,9 +380,17 @@ public class ActionExecutionFunction implements SkyFunction, CompletionReceiver 
           actionLookupData,
           /* inputDiscoveryRan= */ false);
     }
-    // This may be recreated if we discover inputs.
-    ActionMetadataHandler metadataHandler = new ActionMetadataHandler(state.inputArtifactData,
-        action.getOutputs(), tsgm.get(), pathResolver(state.actionFileSystem));
+    // The metadataHandler may be recreated (via the supplier) if we discover inputs.
+    ArtifactPathResolver pathResolver = ArtifactPathResolver.createPathResolver(
+        state.actionFileSystem, skyframeActionExecutor.getExecRoot());
+    ActionMetadataHandler metadataHandler =
+        new ActionMetadataHandler(
+            state.inputArtifactData,
+            /* missingArtifactsAllowed= */ action.discoversInputs(),
+            action.getOutputs(),
+            tsgm.get(),
+            pathResolver,
+            state.actionFileSystem == null ? new OutputStore() : new MinimalOutputStore());
     long actionStartTime = BlazeClock.nanoTime();
     // We only need to check the action cache if we haven't done it on a previous run.
     if (!state.hasCheckedActionCache()) {
@@ -402,10 +411,8 @@ public class ActionExecutionFunction implements SkyFunction, CompletionReceiver 
           "Error, we're not re-executing a "
               + "SkyframeAwareAction which should be re-executed unconditionally. Action: %s",
           action);
-      return ActionExecutionValue.create(
-          metadataHandler.getOutputArtifactData(),
-          metadataHandler.getOutputTreeArtifactData(),
-          metadataHandler.getAdditionalOutputData(),
+      return ActionExecutionValue.createFromOutputStore(
+          metadataHandler.getOutputStore(),
           /*outputSymlinks=*/ null,
           (action instanceof IncludeScannable)
               ? ((IncludeScannable) action).getDiscoveredModules()
@@ -419,9 +426,10 @@ public class ActionExecutionFunction implements SkyFunction, CompletionReceiver 
     // This may be recreated if we discover inputs.
     // TODO(shahan): this isn't used when using ActionFileSystem so we can avoid creating some
     // unused objects.
-    PerActionFileCache perActionFileCache =
-        new PerActionFileCache(
-            state.inputArtifactData, /*missingArtifactsAllowed=*/ action.discoversInputs());
+    MetadataProvider perActionFileCache = skyframeActionExecutor.usePerFileActionCache()
+        ? new PerActionFileCache(
+            state.inputArtifactData, /*missingArtifactsAllowed=*/ action.discoversInputs())
+        : metadataHandler;
     if (action.discoversInputs()) {
       if (state.discoveredInputs == null) {
         try {
@@ -451,14 +459,20 @@ public class ActionExecutionFunction implements SkyFunction, CompletionReceiver 
       if (env.valuesMissing()) {
         return null;
       }
-      perActionFileCache =
-          new PerActionFileCache(state.inputArtifactData, /*missingArtifactsAllowed=*/ false);
-
       metadataHandler =
-          new ActionMetadataHandler(state.inputArtifactData, action.getOutputs(), tsgm.get(),
-              pathResolver(state.actionFileSystem));
+          new ActionMetadataHandler(
+              state.inputArtifactData,
+              /* missingArtifactsAllowed= */ false,
+              action.getOutputs(),
+              tsgm.get(),
+              pathResolver,
+              state.actionFileSystem == null ? new OutputStore() : new MinimalOutputStore());
       // Set the MetadataHandler to accept output information.
       metadataHandler.discardOutputMetadata();
+
+      perActionFileCache = skyframeActionExecutor.usePerFileActionCache()
+          ? new PerActionFileCache(state.inputArtifactData, /*missingArtifactsAllowed=*/ false)
+          : metadataHandler;
     }
 
     // Make sure this is a regular HashMap rather than ImmutableMapBuilder so that we are safe
@@ -537,19 +551,19 @@ public class ActionExecutionFunction implements SkyFunction, CompletionReceiver 
         // markOmitted is only called for remote execution, and this code only gets executed for
         // local execution.
         metadataHandler =
-            new ActionMetadataHandler(state.inputArtifactData, action.getOutputs(), tsgm.get(),
-                pathResolver(state.actionFileSystem));
+            new ActionMetadataHandler(
+                state.inputArtifactData,
+                /*missingArtifactsAllowed=*/ false,
+                action.getOutputs(),
+                tsgm.get(),
+                pathResolver,
+                state.actionFileSystem == null ? new OutputStore() : new MinimalOutputStore());
       }
     }
     Preconditions.checkState(!env.valuesMissing(), action);
     skyframeActionExecutor.afterExecution(
         action, metadataHandler, state.token, clientEnv, actionLookupData);
     return state.value;
-  }
-
-  private ArtifactPathResolver pathResolver(@Nullable FileSystem actionFileSystem) {
-    return ArtifactPathResolver.createPathResolver(
-        actionFileSystem, skyframeActionExecutor.getExecRoot());
   }
 
   private static final Function<Artifact, SkyKey> TO_NONMANDATORY_SKYKEY =
@@ -840,7 +854,7 @@ public class ActionExecutionFunction implements SkyFunction, CompletionReceiver 
         throws IOException {
       if (actionFileSystem != null) {
         executor.updateActionFileSystemContext(
-            actionFileSystem, env, metadataHandler::injectOutputData, filesets);
+            actionFileSystem, env, metadataHandler.getOutputStore()::injectOutputData, filesets);
       }
     }
 

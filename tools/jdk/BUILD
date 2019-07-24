@@ -7,6 +7,7 @@ load(
     "JDK8_JVM_OPTS",
     "JDK9_JVM_OPTS",
     "DEFAULT_JAVACOPTS",
+    "bootclasspath",
 )
 
 # Used to distinguish toolchains used for Java development, ie the JavaToolchainProvider.
@@ -193,37 +194,17 @@ alias(
     actual = "@embedded_jdk//:jdk",
 )
 
-RELEASES = (8, 9)
-
-# Create jars containing compile-time bootclasspaths for each Java version
-# in RELEASES, using javac to read those APIs via the infrastructure added
-# for the --release flag (see http://openjdk.java.net/jeps/247).
-[
-    genrule(
-        name = "platformclasspath%d" % release,
-        srcs = ["DumpPlatformClassPath.java"],
-        outs = ["platformclasspath%d.jar" % release],
-        cmd = """
-set -eu
-TMPDIR=$$(mktemp -d -t tmp.XXXXXXXX)
-$(JAVABASE)/bin/javac -source 8 -target 8 \
-    -Xlint:-options \
-    -cp $(JAVABASE)/lib/tools.jar \
-    -d $$TMPDIR $<
-$(JAVA) -XX:+IgnoreUnrecognizedVMOptions \
-    --add-exports=jdk.compiler/com.sun.tools.javac.platform=ALL-UNNAMED \
-    -cp $$TMPDIR DumpPlatformClassPath %d $@
-rm -rf $$TMPDIR
-""" % release,
-        toolchains = ["@bazel_tools//tools/jdk:current_host_java_runtime"],
-        tools = ["@bazel_tools//tools/jdk:current_host_java_runtime"],
-    )
-    for release in RELEASES
-]
+bootclasspath(
+    name = "platformclasspath",
+    src = "DumpPlatformClassPath.java",
+    host_javabase = "current_java_runtime",
+    release = "8",  # fall-back only
+    target_javabase = "current_java_runtime",
+)
 
 default_java_toolchain(
     name = "toolchain_hostjdk8",
-    bootclasspath = [":platformclasspath8"],
+    bootclasspath = [":platformclasspath"],
     jvm_opts = JDK8_JVM_OPTS,
     source_version = "8",
     target_version = "8",
@@ -231,26 +212,47 @@ default_java_toolchain(
 
 # Default to the Java 8 language level.
 # TODO(cushon): consider if/when we should increment this?
-alias(
-    name = "toolchain_hostjdk9",
-    actual = "toolchain_java8",
+default_java_toolchain(
+    name = "toolchain",
+    bootclasspath = [":platformclasspath"],
+    jvm_opts = JDK9_JVM_OPTS,
+    source_version = "8",
+    target_version = "8",
 )
+
+# The 'vanilla' toolchain is an unsupported alternative to the default.
+#
+# It does not provider any of the following features:
+#   * Error Prone
+#   * Strict Java Deps
+#   * Header Compilation
+#   * Reduced Classpath Optimization
+#
+# It uses the version of javac from the `--host_javabase` instead of the
+# embedded javac, which may not be source- or bug-compatible with the embedded
+# javac.
+#
+# However it does allow using a wider range of `--host_javabase`s, including
+# versions newer than the current embedded JDK.
+default_java_toolchain(
+    name = "toolchain_vanilla",
+    forcibly_disable_header_compilation = True,
+    javabuilder = [":vanillajavabuilder"],
+    jvm_opts = [],
+)
+
+RELEASES = (8, 9)
 
 [
     default_java_toolchain(
         name = "toolchain_java%d" % release,
-        bootclasspath = [":platformclasspath%d" % release],
+        bootclasspath = [":platformclasspath"],
         jvm_opts = JDK9_JVM_OPTS,
         source_version = "%s" % release,
         target_version = "%s" % release,
     )
     for release in RELEASES
 ]
-
-alias(
-    name = "toolchain",
-    actual = "//external:java_toolchain",
-)
 
 filegroup(
     name = "srcs",

@@ -4860,6 +4860,33 @@ public final class BuiltinProtos {
      */
     com.google.protobuf.ByteString
         getDefaultValueBytes();
+
+    /**
+     * <pre>
+     * Whether the param is mandatory or optional.
+     * </pre>
+     *
+     * <code>bool is_mandatory = 5;</code>
+     */
+    boolean getIsMandatory();
+
+    /**
+     * <pre>
+     * Whether the param is a star argument.
+     * </pre>
+     *
+     * <code>bool is_star_arg = 6;</code>
+     */
+    boolean getIsStarArg();
+
+    /**
+     * <pre>
+     * Whether the param is a star-star argument.
+     * </pre>
+     *
+     * <code>bool is_star_star_arg = 7;</code>
+     */
+    boolean getIsStarStarArg();
   }
   /**
    * Protobuf type {@code builtin.Param}
@@ -4878,6 +4905,9 @@ public final class BuiltinProtos {
       type_ = "";
       doc_ = "";
       defaultValue_ = "";
+      isMandatory_ = false;
+      isStarArg_ = false;
+      isStarStarArg_ = false;
     }
 
     @java.lang.Override
@@ -4926,6 +4956,21 @@ public final class BuiltinProtos {
               java.lang.String s = input.readStringRequireUtf8();
 
               defaultValue_ = s;
+              break;
+            }
+            case 40: {
+
+              isMandatory_ = input.readBool();
+              break;
+            }
+            case 48: {
+
+              isStarArg_ = input.readBool();
+              break;
+            }
+            case 56: {
+
+              isStarStarArg_ = input.readBool();
               break;
             }
             default: {
@@ -5122,6 +5167,45 @@ public final class BuiltinProtos {
       }
     }
 
+    public static final int IS_MANDATORY_FIELD_NUMBER = 5;
+    private boolean isMandatory_;
+    /**
+     * <pre>
+     * Whether the param is mandatory or optional.
+     * </pre>
+     *
+     * <code>bool is_mandatory = 5;</code>
+     */
+    public boolean getIsMandatory() {
+      return isMandatory_;
+    }
+
+    public static final int IS_STAR_ARG_FIELD_NUMBER = 6;
+    private boolean isStarArg_;
+    /**
+     * <pre>
+     * Whether the param is a star argument.
+     * </pre>
+     *
+     * <code>bool is_star_arg = 6;</code>
+     */
+    public boolean getIsStarArg() {
+      return isStarArg_;
+    }
+
+    public static final int IS_STAR_STAR_ARG_FIELD_NUMBER = 7;
+    private boolean isStarStarArg_;
+    /**
+     * <pre>
+     * Whether the param is a star-star argument.
+     * </pre>
+     *
+     * <code>bool is_star_star_arg = 7;</code>
+     */
+    public boolean getIsStarStarArg() {
+      return isStarStarArg_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -5148,6 +5232,15 @@ public final class BuiltinProtos {
       if (!getDefaultValueBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 4, defaultValue_);
       }
+      if (isMandatory_ != false) {
+        output.writeBool(5, isMandatory_);
+      }
+      if (isStarArg_ != false) {
+        output.writeBool(6, isStarArg_);
+      }
+      if (isStarStarArg_ != false) {
+        output.writeBool(7, isStarStarArg_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -5168,6 +5261,18 @@ public final class BuiltinProtos {
       }
       if (!getDefaultValueBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, defaultValue_);
+      }
+      if (isMandatory_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(5, isMandatory_);
+      }
+      if (isStarArg_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(6, isStarArg_);
+      }
+      if (isStarStarArg_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(7, isStarStarArg_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -5193,6 +5298,12 @@ public final class BuiltinProtos {
           .equals(other.getDoc());
       result = result && getDefaultValue()
           .equals(other.getDefaultValue());
+      result = result && (getIsMandatory()
+          == other.getIsMandatory());
+      result = result && (getIsStarArg()
+          == other.getIsStarArg());
+      result = result && (getIsStarStarArg()
+          == other.getIsStarStarArg());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -5212,6 +5323,15 @@ public final class BuiltinProtos {
       hash = (53 * hash) + getDoc().hashCode();
       hash = (37 * hash) + DEFAULT_VALUE_FIELD_NUMBER;
       hash = (53 * hash) + getDefaultValue().hashCode();
+      hash = (37 * hash) + IS_MANDATORY_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsMandatory());
+      hash = (37 * hash) + IS_STAR_ARG_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsStarArg());
+      hash = (37 * hash) + IS_STAR_STAR_ARG_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsStarStarArg());
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -5353,6 +5473,12 @@ public final class BuiltinProtos {
 
         defaultValue_ = "";
 
+        isMandatory_ = false;
+
+        isStarArg_ = false;
+
+        isStarStarArg_ = false;
+
         return this;
       }
 
@@ -5383,6 +5509,9 @@ public final class BuiltinProtos {
         result.type_ = type_;
         result.doc_ = doc_;
         result.defaultValue_ = defaultValue_;
+        result.isMandatory_ = isMandatory_;
+        result.isStarArg_ = isStarArg_;
+        result.isStarStarArg_ = isStarStarArg_;
         onBuilt();
         return result;
       }
@@ -5446,6 +5575,15 @@ public final class BuiltinProtos {
         if (!other.getDefaultValue().isEmpty()) {
           defaultValue_ = other.defaultValue_;
           onChanged();
+        }
+        if (other.getIsMandatory() != false) {
+          setIsMandatory(other.getIsMandatory());
+        }
+        if (other.getIsStarArg() != false) {
+          setIsStarArg(other.getIsStarArg());
+        }
+        if (other.getIsStarStarArg() != false) {
+          setIsStarStarArg(other.getIsStarStarArg());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -5816,6 +5954,120 @@ public final class BuiltinProtos {
         onChanged();
         return this;
       }
+
+      private boolean isMandatory_ ;
+      /**
+       * <pre>
+       * Whether the param is mandatory or optional.
+       * </pre>
+       *
+       * <code>bool is_mandatory = 5;</code>
+       */
+      public boolean getIsMandatory() {
+        return isMandatory_;
+      }
+      /**
+       * <pre>
+       * Whether the param is mandatory or optional.
+       * </pre>
+       *
+       * <code>bool is_mandatory = 5;</code>
+       */
+      public Builder setIsMandatory(boolean value) {
+        
+        isMandatory_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Whether the param is mandatory or optional.
+       * </pre>
+       *
+       * <code>bool is_mandatory = 5;</code>
+       */
+      public Builder clearIsMandatory() {
+        
+        isMandatory_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean isStarArg_ ;
+      /**
+       * <pre>
+       * Whether the param is a star argument.
+       * </pre>
+       *
+       * <code>bool is_star_arg = 6;</code>
+       */
+      public boolean getIsStarArg() {
+        return isStarArg_;
+      }
+      /**
+       * <pre>
+       * Whether the param is a star argument.
+       * </pre>
+       *
+       * <code>bool is_star_arg = 6;</code>
+       */
+      public Builder setIsStarArg(boolean value) {
+        
+        isStarArg_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Whether the param is a star argument.
+       * </pre>
+       *
+       * <code>bool is_star_arg = 6;</code>
+       */
+      public Builder clearIsStarArg() {
+        
+        isStarArg_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean isStarStarArg_ ;
+      /**
+       * <pre>
+       * Whether the param is a star-star argument.
+       * </pre>
+       *
+       * <code>bool is_star_star_arg = 7;</code>
+       */
+      public boolean getIsStarStarArg() {
+        return isStarStarArg_;
+      }
+      /**
+       * <pre>
+       * Whether the param is a star-star argument.
+       * </pre>
+       *
+       * <code>bool is_star_star_arg = 7;</code>
+       */
+      public Builder setIsStarStarArg(boolean value) {
+        
+        isStarStarArg_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Whether the param is a star-star argument.
+       * </pre>
+       *
+       * <code>bool is_star_star_arg = 7;</code>
+       */
+      public Builder clearIsStarStarArg() {
+        
+        isStarStarArg_ = false;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -5912,11 +6164,13 @@ public final class BuiltinProtos {
       "uiltin.Callable\022\013\n\003doc\030\004 \001(\t\022(\n\013api_cont" +
       "ext\030\005 \001(\0162\023.builtin.ApiContext\">\n\010Callab" +
       "le\022\035\n\005param\030\001 \003(\0132\016.builtin.Param\022\023\n\013ret" +
-      "urn_type\030\002 \001(\t\"G\n\005Param\022\014\n\004name\030\001 \001(\t\022\014\n" +
-      "\004type\030\002 \001(\t\022\013\n\003doc\030\003 \001(\t\022\025\n\rdefault_valu" +
-      "e\030\004 \001(\t*)\n\nApiContext\022\007\n\003ALL\020\000\022\007\n\003BZL\020\001\022" +
-      "\t\n\005BUILD\020\002B9\n(com.google.devtools.build." +
-      "docgen.builtinB\rBuiltinProtosb\006proto3"
+      "urn_type\030\002 \001(\t\"\214\001\n\005Param\022\014\n\004name\030\001 \001(\t\022\014" +
+      "\n\004type\030\002 \001(\t\022\013\n\003doc\030\003 \001(\t\022\025\n\rdefault_val" +
+      "ue\030\004 \001(\t\022\024\n\014is_mandatory\030\005 \001(\010\022\023\n\013is_sta" +
+      "r_arg\030\006 \001(\010\022\030\n\020is_star_star_arg\030\007 \001(\010*)\n" +
+      "\nApiContext\022\007\n\003ALL\020\000\022\007\n\003BZL\020\001\022\t\n\005BUILD\020\002" +
+      "B9\n(com.google.devtools.build.docgen.bui" +
+      "ltinB\rBuiltinProtosb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -5959,7 +6213,7 @@ public final class BuiltinProtos {
     internal_static_builtin_Param_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_builtin_Param_descriptor,
-        new java.lang.String[] { "Name", "Type", "Doc", "DefaultValue", });
+        new java.lang.String[] { "Name", "Type", "Doc", "DefaultValue", "IsMandatory", "IsStarArg", "IsStarStarArg", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

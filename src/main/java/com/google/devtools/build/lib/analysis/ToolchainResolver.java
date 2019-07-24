@@ -290,7 +290,7 @@ public class ToolchainResolver {
               .handle(
                   Event.info(
                       String.format(
-                          "ToolchainUtil: Removed execution platform %s from"
+                          "ToolchainResolver: Removed execution platform %s from"
                               + " available execution platforms, it is missing constraint %s",
                           platformInfo.label(), filterConstraint.label())));
         }
@@ -434,7 +434,7 @@ public class ToolchainResolver {
             .handle(
                 Event.info(
                     String.format(
-                        "ToolchainUtil: Selected execution platform %s, %s",
+                        "ToolchainResolver: Selected execution platform %s, %s",
                         executionPlatformKey.getLabel(), selectedToolchains)));
       }
       return Optional.of(executionPlatformKey);
@@ -518,6 +518,8 @@ public class ToolchainResolver {
                       attribute.getName().equals(PlatformSemantics.RESOLVED_TOOLCHAINS_ATTR))
               .findFirst();
       ImmutableMap.Builder<Label, ToolchainInfo> toolchains = new ImmutableMap.Builder<>();
+      ImmutableList.Builder<TemplateVariableInfo> templateVariableProviders =
+          new ImmutableList.Builder<>();
       if (toolchainAttribute.isPresent()) {
         for (ConfiguredTargetAndData target : prerequisiteMap.get(toolchainAttribute.get())) {
           Label discoveredLabel = target.getTarget().getLabel();
@@ -532,11 +534,18 @@ public class ToolchainResolver {
           }
 
           // Find any template variables present for this toolchain.
-          // TODO(jcater): save this somewhere.
+          TemplateVariableInfo templateVariableInfo =
+              target.getConfiguredTarget().get(TemplateVariableInfo.PROVIDER);
+          if (templateVariableInfo != null) {
+            templateVariableProviders.add(templateVariableInfo);
+          }
         }
       }
 
-      return toolchainContext.setToolchains(toolchains.build()).build();
+      return toolchainContext
+          .setToolchains(toolchains.build())
+          .setTemplateVariableProviders(templateVariableProviders.build())
+          .build();
     }
   }
 

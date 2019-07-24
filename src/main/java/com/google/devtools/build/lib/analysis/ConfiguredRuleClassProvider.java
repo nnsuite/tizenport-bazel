@@ -60,10 +60,10 @@ import com.google.devtools.build.lib.skylarkinterface.SkylarkModule;
 import com.google.devtools.build.lib.syntax.Environment;
 import com.google.devtools.build.lib.syntax.Environment.Extension;
 import com.google.devtools.build.lib.syntax.Environment.GlobalFrame;
-import com.google.devtools.build.lib.syntax.Environment.Phase;
 import com.google.devtools.build.lib.syntax.Mutability;
 import com.google.devtools.build.lib.syntax.SkylarkSemantics;
 import com.google.devtools.build.lib.syntax.SkylarkUtils;
+import com.google.devtools.build.lib.syntax.SkylarkUtils.Phase;
 import com.google.devtools.build.lib.syntax.Type;
 import com.google.devtools.common.options.OptionsProvider;
 import java.lang.reflect.Constructor;
@@ -256,14 +256,6 @@ public class ConfiguredRuleClassProvider implements RuleClassProvider {
     private BuildConfiguration.ActionEnvironmentProvider actionEnvironmentProvider =
         (BuildOptions options) -> ActionEnvironment.EMPTY;
     private ConstraintSemantics constraintSemantics = new ConstraintSemantics();
-
-    // TODO(pcloudy): Remove this field after Bazel rule definitions are not used internally.
-    private String nativeLauncherLabel;
-
-    public Builder setNativeLauncherLabel(String label) {
-      this.nativeLauncherLabel = label;
-      return this;
-    }
 
     public Builder addWorkspaceFilePrefix(String contents) {
       defaultWorkspaceFilePrefix.append(contents);
@@ -544,14 +536,6 @@ public class ConfiguredRuleClassProvider implements RuleClassProvider {
     }
 
     @Override
-    public Label getLauncherLabel() {
-      if (nativeLauncherLabel == null) {
-        return null;
-      }
-      return getToolsLabel(nativeLauncherLabel);
-    }
-
-    @Override
     public String getToolsRepository() {
       return toolsRepository;
     }
@@ -825,10 +809,10 @@ public class ConfiguredRuleClassProvider implements RuleClassProvider {
             .setEventHandler(eventHandler)
             .setFileContentHashCode(astFileContentHashCode)
             .setImportedExtensions(importMap)
-            .setPhase(Phase.LOADING)
             .build();
     SkylarkUtils.setToolsRepository(env, toolsRepository);
     SkylarkUtils.setFragmentMap(env, configurationFragmentMap);
+    SkylarkUtils.setPhase(env, Phase.LOADING);
     return env;
   }
 

@@ -29,6 +29,7 @@ import com.google.devtools.build.lib.skylarkinterface.SkylarkModule;
 import com.google.devtools.build.lib.syntax.BaseFunction;
 import com.google.devtools.build.lib.syntax.EvalUtils;
 import com.google.devtools.build.lib.syntax.FuncallExpression;
+import com.google.devtools.build.lib.syntax.SkylarkSemantics;
 import com.google.devtools.common.options.OptionsParser;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -108,8 +109,10 @@ public class ApiExporter {
       } else {
         SkylarkModule typeModule = SkylarkInterfaceUtils.getSkylarkModule(obj.getClass());
         if (typeModule != null) {
-          if (FuncallExpression.hasSelfCallMethod(obj.getClass())) {
-            value = collectFunctionInfo(FuncallExpression.getSelfCallMethod(obj));
+          if (FuncallExpression.hasSelfCallMethod(
+              SkylarkSemantics.DEFAULT_SEMANTICS, obj.getClass())) {
+            value = collectFunctionInfo(
+                FuncallExpression.getSelfCallMethod(SkylarkSemantics.DEFAULT_SEMANTICS, obj));
           } else {
             value.setName(entry.getKey());
             value.setType(entry.getKey());
@@ -137,11 +140,43 @@ public class ApiExporter {
     Value.Builder value = Value.newBuilder();
     value.setName(func.getName());
     Callable.Builder callable = Callable.newBuilder();
-    ImmutableList<String> paramNames = func.getSignature().getSignature().getNames();
 
-    for (int i = 0; i < paramNames.size(); i++) {
+    ImmutableList<String> paramNames = func.getSignature().getSignature().getNames();
+    List<Object> defaultValues = func.getSignature().getDefaultValues();
+    int positionals = func.getSignature().getSignature().getShape().getMandatoryPositionals();
+    int optionals = func.getSignature().getSignature().getShape().getOptionals();
+    int nameIndex = 0;
+
+    for (int i = 0; i < positionals; i++) {
       Param.Builder param = Param.newBuilder();
-      param.setName(paramNames.get(i));
+      param.setName(paramNames.get(nameIndex));
+      param.setIsMandatory(true);
+      callable.addParam(param);
+      nameIndex++;
+    }
+
+    for (int i = 0; i < optionals; i++) {
+      Param.Builder param = Param.newBuilder();
+      param.setName(paramNames.get(nameIndex));
+      param.setIsMandatory(false);
+      param.setDefaultValue(defaultValues.get(i).toString());
+      callable.addParam(param);
+      nameIndex++;
+    }
+
+    if (func.getSignature().getSignature().getShape().hasStarArg()) {
+      Param.Builder param = Param.newBuilder();
+      param.setName("*" + paramNames.get(nameIndex));
+      param.setIsMandatory(false);
+      param.setIsStarArg(true);
+      nameIndex++;
+      callable.addParam(param);
+    }
+    if (func.getSignature().getSignature().getShape().hasKwArg()) {
+      Param.Builder param = Param.newBuilder();
+      param.setIsMandatory(false);
+      param.setIsStarStarArg(true);
+      param.setName("**" + paramNames.get(nameIndex));
       callable.addParam(param);
     }
     if (func.getObjectType() != null) {
@@ -158,8 +193,7 @@ public class ApiExporter {
     if (meth.isCallable()) {
       Callable.Builder callable = Callable.newBuilder();
       for (SkylarkParamDoc par : meth.getParams()) {
-        Param.Builder param = Param.newBuilder();
-        param.setName(par.getName());
+        Param.Builder param = newParam(par.getName(), par.getDefaultValue().isEmpty());
         param.setType(par.getType());
         param.setDoc(par.getDocumentation());
         param.setDefaultValue(par.getDefaultValue());
@@ -173,16 +207,24 @@ public class ApiExporter {
     return field;
   }
 
+  private static Param.Builder newParam(String name, Boolean isMandatory) {
+    Param.Builder param = Param.newBuilder();
+    param.setName(name);
+    param.setIsMandatory(isMandatory);
+    return param;
+  }
+
   private static Value.Builder collectRuleInfo(RuleDocumentation rule)
       throws BuildEncyclopediaDocException {
     Value.Builder value = Value.newBuilder();
     value.setName(rule.getRuleName());
     value.setDoc(rule.getHtmlDocumentation());
     Callable.Builder callable = Callable.newBuilder();
+    // All native rules have attribute "name". It is not included in the attributes list and needs
+    // to be added separately.
+    callable.addParam(newParam("name", true));
     for (RuleDocumentationAttribute attr : rule.getAttributes()) {
-      Param.Builder param = Param.newBuilder();
-      param.setName(attr.getAttributeName());
-      callable.addParam(param);
+      callable.addParam(newParam(attr.getAttributeName(), attr.isMandatory()));
     }
     value.setCallable(callable);
     return value;

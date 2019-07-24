@@ -77,7 +77,7 @@ public abstract class GenRuleBase implements RuleConfiguredTargetFactory {
     return CROSSTOOL_MAKE_VARIABLE_PATTERN.matcher(command).find();
   }
 
-  protected boolean requiresJdk(String command) {
+  protected static boolean requiresJdk(String command) {
     return JDK_MAKE_VARIABLE.matcher(command).find();
   }
 
@@ -195,7 +195,7 @@ public abstract class GenRuleBase implements RuleConfiguredTargetFactory {
 
     NestedSetBuilder<Artifact> inputs = NestedSetBuilder.stableOrder();
     inputs.addTransitive(resolvedSrcs);
-    inputs.addAll(commandHelper.getResolvedTools());
+    inputs.addTransitive(commandHelper.getResolvedTools());
     FilesToRunProvider genruleSetup =
         ruleContext.getPrerequisite("$genrule_setup", Mode.HOST, FilesToRunProvider.class);
     inputs.addTransitive(genruleSetup.getFilesToRun());

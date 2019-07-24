@@ -106,7 +106,6 @@ py_test(
     name = "launcher_test",
     size = "medium",
     srcs = ["launcher_test.py"],
-    tags = ["manual"],  # TODO(b/72827255): Reenable once it works.
     deps = [":test_base"],
 )
 
@@ -119,6 +118,18 @@ py_test(
         ":test_base",
         "//third_party/py/six",
     ],
+)
+
+py_test(
+    name = "runfiles_sandboxed_test",
+    timeout = "long",
+    srcs = ["runfiles_sandboxed_test.py"],
+    data = glob(["testdata/runfiles_test/**"]),
+    tags = [
+        # Windows does not support sandboxing yet.
+        "no_windows",
+    ],
+    deps = [":test_base"],
 )
 
 py_test(

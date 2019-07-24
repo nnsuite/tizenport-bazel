@@ -95,7 +95,6 @@ import com.google.devtools.build.lib.rules.cpp.CcCompilationHelper;
 import com.google.devtools.build.lib.rules.cpp.CcCompilationHelper.CompilationInfo;
 import com.google.devtools.build.lib.rules.cpp.CcCompilationOutputs;
 import com.google.devtools.build.lib.rules.cpp.CcLinkingHelper;
-import com.google.devtools.build.lib.rules.cpp.CcLinkingHelper.LinkingInfo;
 import com.google.devtools.build.lib.rules.cpp.CcToolchain;
 import com.google.devtools.build.lib.rules.cpp.CcToolchainFeatures.CollidingProvidesException;
 import com.google.devtools.build.lib.rules.cpp.CcToolchainFeatures.FeatureConfiguration;
@@ -463,16 +462,17 @@ public class CompilationSupport {
     CcCompilationOutputs.Builder compilationOutputsBuilder = new CcCompilationOutputs.Builder();
     compilationOutputsBuilder.merge(objcArcCompilationInfo.getCcCompilationOutputs());
     compilationOutputsBuilder.merge(nonObjcArcCompilationInfo.getCcCompilationOutputs());
+    CcCompilationOutputs compilationOutputs = compilationOutputsBuilder.build();
 
-    LinkingInfo linkingInfo =
-        resultLink.link(compilationOutputsBuilder.build(), ccCompilationContextBuilder.build());
+    if (!compilationOutputs.isEmpty()) {
+      resultLink.link(compilationOutputs);
+    }
 
     Map<String, NestedSet<Artifact>> mergedOutputGroups =
         CcCommon.mergeOutputGroups(
             ImmutableList.of(
                 objcArcCompilationInfo.getOutputGroups(),
-                nonObjcArcCompilationInfo.getOutputGroups(),
-                linkingInfo.getOutputGroups()));
+                nonObjcArcCompilationInfo.getOutputGroups()));
 
     return new Pair<>(compilationOutputsBuilder.build(), ImmutableMap.copyOf(mergedOutputGroups));
   }

@@ -15,11 +15,11 @@
 package com.google.devtools.build.lib.rules.cpp;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.devtools.build.lib.analysis.config.AutoCpuConverter;
 import com.google.devtools.build.lib.analysis.config.BuildConfiguration;
 import com.google.devtools.build.lib.analysis.config.BuildConfiguration.Options.MakeVariableSource;
 import com.google.devtools.build.lib.analysis.config.BuildOptions;
@@ -34,13 +34,13 @@ import com.google.devtools.build.lib.events.Event;
 import com.google.devtools.build.lib.events.EventHandler;
 import com.google.devtools.build.lib.events.Location;
 import com.google.devtools.build.lib.rules.cpp.CppConfigurationLoader.CppConfigurationParameters;
-import com.google.devtools.build.lib.rules.cpp.CrosstoolConfigurationLoader.CrosstoolFile;
 import com.google.devtools.build.lib.rules.cpp.Link.LinkingMode;
 import com.google.devtools.build.lib.skylarkbuildapi.cpp.CppConfigurationApi;
 import com.google.devtools.build.lib.skylarkinterface.SkylarkCallable;
 import com.google.devtools.build.lib.syntax.EvalException;
 import com.google.devtools.build.lib.vfs.PathFragment;
 import com.google.devtools.build.lib.view.config.crosstool.CrosstoolConfig;
+import com.google.devtools.build.lib.view.config.crosstool.CrosstoolConfig.CrosstoolRelease;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -175,7 +175,16 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
   public static final String FDO_STAMP_MACRO = "BUILD_FDO_TYPE";
 
   private final Label crosstoolTop;
-  private final CrosstoolFile crosstoolFile;
+  /**
+   * cc_toolchain_suite allows to override CROSSTOOL by using proto attribute. This attribute value
+   * is stored here so cc_toolchain can access it in the analysis. Don't use this for anything, it
+   * will be removed when b/113849758 is fixed. If you do, I'll send bubo to take your keyboard
+   * away.
+   */
+  @Deprecated private final CrosstoolRelease crosstoolFromCcToolchainProtoAttribute;
+
+  private final String transformedCpuFromOptions;
+  private final String compilerFromOptions;
   // TODO(lberki): desiredCpu *should* be always the same as targetCpu, except that we don't check
   // that the CPU we get from the toolchain matches BuildConfiguration.Options.cpu . So we store
   // it here so that the output directory doesn't depend on the CToolchain. When we will eventually
@@ -211,7 +220,6 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
   private final ImmutableList<String> ltobackendOptions;
 
   private final CppOptions cppOptions;
-  private final CpuTransformer cpuTransformerEnum;
 
   // The dynamic mode for linking.
   private final boolean stripBinaries;
@@ -263,7 +271,9 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
 
     return new CppConfiguration(
         params.crosstoolTop,
-        params.crosstoolFile,
+        params.crosstoolFromCcToolchainProtoAttribute,
+        params.transformedCpu,
+        params.compiler,
         Preconditions.checkNotNull(params.commonOptions.cpu),
         crosstoolTopPathFragment,
         params.fdoPath,
@@ -288,7 +298,6 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
         ImmutableList.copyOf(cppOptions.ltoindexoptList),
         ImmutableList.copyOf(cppOptions.ltobackendoptList),
         cppOptions,
-        params.cpuTransformer,
         (cppOptions.stripBinaries == StripMode.ALWAYS
             || (cppOptions.stripBinaries == StripMode.SOMETIMES
                 && compilationMode == CompilationMode.FASTBUILD)),
@@ -299,7 +308,9 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
 
   private CppConfiguration(
       Label crosstoolTop,
-      CrosstoolFile crosstoolFile,
+      CrosstoolRelease crosstoolFromCcToolchainProtoAttribute,
+      String transformedCpuFromOptions,
+      String compilerFromOptions,
       String desiredCpu,
       PathFragment crosstoolTopPathFragment,
       PathFragment fdoPath,
@@ -321,13 +332,14 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
       ImmutableList<String> ltoindexOptions,
       ImmutableList<String> ltobackendOptions,
       CppOptions cppOptions,
-      CpuTransformer cpuTransformerEnum,
       boolean stripBinaries,
       CompilationMode compilationMode,
       boolean shouldProvideMakeVariables,
       CppToolchainInfo cppToolchainInfo) {
     this.crosstoolTop = crosstoolTop;
-    this.crosstoolFile = crosstoolFile;
+    this.crosstoolFromCcToolchainProtoAttribute = crosstoolFromCcToolchainProtoAttribute;
+    this.transformedCpuFromOptions = transformedCpuFromOptions;
+    this.compilerFromOptions = compilerFromOptions;
     this.desiredCpu = desiredCpu;
     this.crosstoolTopPathFragment = crosstoolTopPathFragment;
     this.fdoPath = fdoPath;
@@ -349,7 +361,6 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
     this.ltoindexOptions = ltoindexOptions;
     this.ltobackendOptions = ltobackendOptions;
     this.cppOptions = cppOptions;
-    this.cpuTransformerEnum = cpuTransformerEnum;
     this.stripBinaries = stripBinaries;
     this.compilationMode = compilationMode;
     this.shouldProvideMakeVariables = shouldProvideMakeVariables;
@@ -386,19 +397,9 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
     return cppToolchainInfo.getToolchainIdentifier();
   }
 
-  /** Returns the contents of the CROSSTOOL for this configuration. */
-  public CrosstoolFile getCrosstoolFile() {
-    return crosstoolFile;
-  }
-
   /** Returns the label of the CROSSTOOL for this configuration. */
   public Label getCrosstoolTop() {
     return crosstoolTop;
-  }
-
-  /** Returns the transformer that should be applied to cpu names in toolchain selection. */
-  public Function<String, String> getCpuTransformer() {
-    return cpuTransformerEnum.getTransformer();
   }
 
   /**
@@ -516,7 +517,7 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
     ImmutableList.Builder<PathFragment> builtInIncludeDirectoriesBuilder = ImmutableList.builder();
     for (String s : cppToolchainInfo.getRawBuiltInIncludeDirectories()) {
       builtInIncludeDirectoriesBuilder.add(
-          CcToolchain.resolveIncludeDir(s, sysroot, crosstoolTopPathFragment));
+          CcToolchainProviderHelper.resolveIncludeDir(s, sysroot, crosstoolTopPathFragment));
     }
     return builtInIncludeDirectoriesBuilder.build();
   }
@@ -898,6 +899,20 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
     return cppOptions.useStartEndLib;
   }
 
+  /**
+   * @return value from the --cpu option transformed using {@link CpuTransformer}. If it was not
+   *     passed explicitly, {@link AutoCpuConverter} will try to guess something reasonable.
+   */
+  public String getTransformedCpuFromOptions() {
+    return transformedCpuFromOptions;
+  }
+
+  /** @return value from --compiler option, null if the option was not passed. */
+  @Nullable
+  public String getCompilerFromOptions() {
+    return compilerFromOptions;
+  }
+
   public boolean legacyWholeArchive() {
     return cppOptions.legacyWholeArchive;
   }
@@ -1076,7 +1091,7 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
 
   @Override
   public void addGlobalMakeVariables(ImmutableMap.Builder<String, String> globalMakeEnvBuilder) {
-    if (cppOptions.disableMakeVariables || !cppOptions.enableMakeVariables) {
+    if (cppOptions.disableMakeVariables) {
       return;
     }
 
@@ -1164,7 +1179,18 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
   }
 
   public boolean disableMakeVariables() {
-    return cppOptions.disableMakeVariables || !cppOptions.enableMakeVariables;
+    return cppOptions.disableMakeVariables;
+  }
+
+  /**
+   * cc_toolchain_suite allows to override CROSSTOOL by using proto attribute. This attribute value
+   * is stored here so cc_toolchain can access it in the analysis. Don't use this for anything, it
+   * will be removed when b/113849758 is fixed. If you do, I'll send bubo to take your keyboard
+   * away.
+   */
+  @Deprecated
+  public CrosstoolRelease getCrosstoolFromCcToolchainProtoAttribute() {
+    return crosstoolFromCcToolchainProtoAttribute;
   }
 
   public boolean enableLinkoptsInUserLinkFlags() {
@@ -1182,25 +1208,38 @@ public final class CppConfiguration extends BuildConfiguration.Fragment
   private void checkForToolchainSkylarkApiAvailability() throws EvalException {
     if (cppOptions.disableLegacyToolchainSkylarkApi
         || !cppOptions.enableLegacyToolchainSkylarkApi) {
-      throw new EvalException(null, "Information about the C++ toolchain API is not accessible "
-          + "anymore through ctx.fragments.cpp . Use CcToolchainInfo instead.");
+      throw new EvalException(
+          null,
+          "Information about the C++ toolchain API is not accessible "
+              + "anymore through ctx.fragments.cpp "
+              + "(see --incompatible_disable_legacy_cpp_toolchain_skylark_api on "
+              + "http://docs.bazel.build/versions/master/skylark/backward-compatibility.html"
+              + "#disable-legacy-c-configuration-api for migration notes). "
+              + "Use CcToolchainInfo instead.");
     }
   }
 
   public void checkForLegacyCompilationApiAvailability() throws EvalException {
-    if (cppOptions.disableLegacyCompilationApi) {
+    if (cppOptions.disableLegacyCompilationApi || cppOptions.disableLegacyFlagsCcToolchainApi) {
       throw new EvalException(
           null,
           "Skylark APIs accessing compilation flags has been removed. "
-              + "Use the new API on cc_common.");
+              + "Use the new API on cc_common (see "
+              + "--incompatible_disable_legacy_flags_cc_toolchain_api on"
+              + "https://docs.bazel.build/versions/master/skylark/backward-compatibility.html"
+              + "#disable-legacy-c-toolchain-api for migration notes).");
     }
   }
 
   public void checkForLegacyLinkingApiAvailability() throws EvalException {
-    if (cppOptions.disableLegacyLinkingApi) {
+    if (cppOptions.disableLegacyLinkingApi || cppOptions.disableLegacyFlagsCcToolchainApi) {
       throw new EvalException(
           null,
-          "Skylark APIs accessing linking flags has been removed. Use the new API on cc_common.");
+          "Skylark APIs accessing linking flags has been removed. "
+              + "Use the new API on cc_common (see "
+              + "--incompatible_disable_legacy_flags_cc_toolchain_api on"
+              + "https://docs.bazel.build/versions/master/skylark/backward-compatibility.html"
+              + "#disable-legacy-c-toolchain-api for migration notes).");
     }
   }
 

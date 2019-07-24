@@ -26,6 +26,7 @@ import com.google.devtools.build.lib.actions.RunfilesSupplier;
 import com.google.devtools.build.lib.analysis.actions.FileWriteAction;
 import com.google.devtools.build.lib.analysis.configuredtargets.RuleConfiguredTarget.Mode;
 import com.google.devtools.build.lib.cmdline.Label;
+import com.google.devtools.build.lib.collect.nestedset.NestedSet;
 import com.google.devtools.build.lib.collect.nestedset.NestedSetBuilder;
 import com.google.devtools.build.lib.syntax.SkylarkList;
 import com.google.devtools.build.lib.util.OS;
@@ -137,7 +138,7 @@ public final class CommandHelper {
   /**
    * Output executable files from the 'tools' attribute.
    */
-  private final SkylarkList<Artifact> resolvedTools;
+  private final NestedSet<Artifact> resolvedTools;
 
   /**
    * Creates a {@link CommandHelper}.
@@ -154,7 +155,7 @@ public final class CommandHelper {
 
     this.ruleContext = ruleContext;
 
-    ImmutableList.Builder<Artifact> resolvedToolsBuilder = ImmutableList.builder();
+    NestedSetBuilder<Artifact> resolvedToolsBuilder = NestedSetBuilder.stableOrder();
     ImmutableList.Builder<RunfilesSupplier> toolsRunfilesBuilder = ImmutableList.builder();
     Map<Label, Collection<Artifact>> tempLabelMap = new HashMap<>();
 
@@ -165,13 +166,25 @@ public final class CommandHelper {
     for (Iterable<? extends TransitiveInfoCollection> tools : toolsList) {
       for (TransitiveInfoCollection dep : tools) { // (Note: host configuration)
         Label label = AliasProvider.getDependencyLabel(dep);
+        MiddlemanProvider toolMiddleman = dep.getProvider(MiddlemanProvider.class);
+        if (toolMiddleman != null) {
+          resolvedToolsBuilder.addTransitive(toolMiddleman.getMiddlemanArtifact());
+          // It is not obviously correct to skip potentially adding getFilesToRun of the
+          // FilesToRunProvider. However, for all tools that we know of that provide a middleman,
+          // the middleman is equivalent to the list of files coming out of getFilesToRun().
+          // Just adding all the files creates a substantial performance bottleneck. E.g. a C++
+          // toolchain might consist of thousands of files and tracking them one by one for each
+          // action that uses them is inefficient.
+          continue;
+        }
+
         FilesToRunProvider tool = dep.getProvider(FilesToRunProvider.class);
         if (tool == null) {
           continue;
         }
 
-        Iterable<Artifact> files = tool.getFilesToRun();
-        resolvedToolsBuilder.addAll(files);
+        NestedSet<Artifact> files = tool.getFilesToRun();
+        resolvedToolsBuilder.addTransitive(files);
         Artifact executableArtifact = tool.getExecutable();
         // If the label has an executable artifact add that to the multimaps.
         if (executableArtifact != null) {
@@ -185,7 +198,7 @@ public final class CommandHelper {
       }
     }
 
-    this.resolvedTools = SkylarkList.createImmutable(resolvedToolsBuilder.build());
+    this.resolvedTools = resolvedToolsBuilder.build();
     this.toolsRunfilesSuppliers = SkylarkList.createImmutable(toolsRunfilesBuilder.build());
     ImmutableMap.Builder<Label, ImmutableCollection<Artifact>> labelMapBuilder =
         ImmutableMap.builder();
@@ -195,7 +208,7 @@ public final class CommandHelper {
     this.labelMap = labelMapBuilder.build();
   }
 
-  public SkylarkList<Artifact> getResolvedTools() {
+  public NestedSet<Artifact> getResolvedTools() {
     return resolvedTools;
   }
 

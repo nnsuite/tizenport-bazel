@@ -76,6 +76,7 @@ import com.google.devtools.build.lib.query2.engine.QueryExpressionContext;
 import com.google.devtools.build.lib.query2.engine.QueryExpressionMapper;
 import com.google.devtools.build.lib.query2.engine.QueryUtil.MinDepthUniquifierImpl;
 import com.google.devtools.build.lib.query2.engine.QueryUtil.MutableKeyExtractorBackedMapImpl;
+import com.google.devtools.build.lib.query2.engine.QueryUtil.NonExceptionalUniquifier;
 import com.google.devtools.build.lib.query2.engine.QueryUtil.ThreadSafeMutableKeyExtractorBackedSetImpl;
 import com.google.devtools.build.lib.query2.engine.QueryUtil.UniquifierImpl;
 import com.google.devtools.build.lib.query2.engine.StreamableQueryEnvironment;
@@ -145,7 +146,7 @@ public class SkyQueryEnvironment extends AbstractBlazeQueryEnvironment<Target>
 
   protected final String parserPrefix;
   protected final PathPackageLocator pkgPath;
-  private final int queryEvaluationParallelismLevel;
+  protected final int queryEvaluationParallelismLevel;
 
   // The following fields are set in the #beforeEvaluateQuery method.
   private MultisetSemaphore<PackageIdentifier> packageSemaphore;
@@ -399,7 +400,10 @@ public class SkyQueryEnvironment extends AbstractBlazeQueryEnvironment<Target>
     //
     // This flushes the batched callback prior to constructing the QueryEvalResult in the unlikely
     // case of a race between the original callback and the eventHandler.
-    BatchStreamedCallback batchCallback = new BatchStreamedCallback(callback, BATCH_CALLBACK_SIZE);
+    BatchStreamedCallback batchCallback = new BatchStreamedCallback(
+        callback,
+        BATCH_CALLBACK_SIZE,
+        createUniquifierForOuterBatchStreamedCallback(expr));
     return super.evaluateQuery(expr, batchCallback);
   }
 
@@ -621,7 +625,7 @@ public class SkyQueryEnvironment extends AbstractBlazeQueryEnvironment<Target>
   @Override
   public ThreadSafeMutableSet<Target> createThreadSafeMutableSet() {
     return new ThreadSafeMutableKeyExtractorBackedSetImpl<>(
-        TargetKeyExtractor.INSTANCE, Target.class, DEFAULT_THREAD_COUNT);
+        TargetKeyExtractor.INSTANCE, Target.class, queryEvaluationParallelismLevel);
   }
 
   @Override
@@ -630,20 +634,28 @@ public class SkyQueryEnvironment extends AbstractBlazeQueryEnvironment<Target>
   }
 
   @ThreadSafe
+  protected NonExceptionalUniquifier<Target> createUniquifierForOuterBatchStreamedCallback(
+      QueryExpression expr) {
+    return createUniquifier();
+  }
+
+  @ThreadSafe
   @Override
-  public Uniquifier<Target> createUniquifier() {
+  public NonExceptionalUniquifier<Target> createUniquifier() {
     return new UniquifierImpl<>(TargetKeyExtractor.INSTANCE);
   }
 
   @ThreadSafe
   @Override
   public MinDepthUniquifier<Target> createMinDepthUniquifier() {
-    return new MinDepthUniquifierImpl<>(TargetKeyExtractor.INSTANCE, DEFAULT_THREAD_COUNT);
+    return new MinDepthUniquifierImpl<>(
+        TargetKeyExtractor.INSTANCE, queryEvaluationParallelismLevel);
   }
 
   @ThreadSafe
-  protected MinDepthUniquifier<SkyKey> createMinDepthSkyKeyUniquifier() {
-    return new MinDepthUniquifierImpl<>(SkyKeyKeyExtractor.INSTANCE, DEFAULT_THREAD_COUNT);
+  public MinDepthUniquifier<SkyKey> createMinDepthSkyKeyUniquifier() {
+    return new MinDepthUniquifierImpl<>(
+        SkyKeyKeyExtractor.INSTANCE, queryEvaluationParallelismLevel);
   }
 
   @ThreadSafe
@@ -1065,7 +1077,9 @@ public class SkyQueryEnvironment extends AbstractBlazeQueryEnvironment<Target>
   }
 
   protected void getBuildFileTargetsForPackageKeysAndProcessViaCallback(
-      Iterable<SkyKey> packageKeys, Callback<Target> callback)
+      Iterable<SkyKey> packageKeys,
+      QueryExpressionContext<Target> context,
+      Callback<Target> callback)
       throws QueryException, InterruptedException {
     Set<PackageIdentifier> pkgIds =
           Streams.stream(packageKeys)
@@ -1084,17 +1098,20 @@ public class SkyQueryEnvironment extends AbstractBlazeQueryEnvironment<Target>
   }
 
   /**
-   * Calculates the set of packages that transitively depend on, via load statements, the specified
-   * paths. The emitted {@link Target}s are BUILD file targets.
+   * Calculates the set of packages whose evaluation transitively depends on (e.g. via 'load'
+   * statements) the contents of the specified paths. The emitted {@link Target}s are BUILD file
+   * targets.
    */
   @ThreadSafe
   QueryTaskFuture<Void> getRBuildFiles(
-      Collection<PathFragment> fileIdentifiers, Callback<Target> callback) {
+      Collection<PathFragment> fileIdentifiers,
+      QueryExpressionContext<Target> context,
+      Callback<Target> callback) {
     return QueryTaskFutureImpl.ofDelegate(
         safeSubmit(
             () -> {
               ParallelSkyQueryUtils.getRBuildFilesParallel(
-                  SkyQueryEnvironment.this, fileIdentifiers, callback);
+                  SkyQueryEnvironment.this, fileIdentifiers, context, callback);
               return null;
             }));
   }
@@ -1163,17 +1180,18 @@ public class SkyQueryEnvironment extends AbstractBlazeQueryEnvironment<Target>
     // memory. We should have a threshold for when to invoke the callback with a batch, and also a
     // separate, larger, bound on the number of targets being processed at the same time.
     private final ThreadSafeOutputFormatterCallback<Target> callback;
-    private final UniquifierImpl<Target, ?> uniquifier =
-        new UniquifierImpl<>(TargetKeyExtractor.INSTANCE);
+    private final NonExceptionalUniquifier<Target> uniquifier;
     private final Object pendingLock = new Object();
     private List<Target> pending = new ArrayList<>();
     private int batchThreshold;
 
     private BatchStreamedCallback(
         ThreadSafeOutputFormatterCallback<Target> callback,
-        int batchThreshold) {
+        int batchThreshold,
+        NonExceptionalUniquifier<Target> uniquifier) {
       this.callback = callback;
       this.batchThreshold = batchThreshold;
+      this.uniquifier = uniquifier;
     }
 
     @Override
@@ -1241,7 +1259,7 @@ public class SkyQueryEnvironment extends AbstractBlazeQueryEnvironment<Target>
         universe,
         context,
         BATCH_CALLBACK_SIZE,
-        DEFAULT_THREAD_COUNT);
+        queryEvaluationParallelismLevel);
   }
 
   @ThreadSafe

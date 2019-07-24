@@ -124,6 +124,7 @@ cc_toolchain(
     static_runtime_libs = [":empty"],
     strip_files = ":empty",
     supports_param_files = 1,
+    toolchain_identifier = "local_linux",
 )
 
 toolchain(
@@ -150,6 +151,7 @@ cc_toolchain(
     static_runtime_libs = [":empty"],
     strip_files = ":empty",
     supports_param_files = 1,
+    toolchain_identifier = "local_linux",
 )
 
 toolchain(
@@ -176,6 +178,7 @@ cc_toolchain(
     static_runtime_libs = [":empty"],
     strip_files = ":empty",
     supports_param_files = 1,
+    toolchain_identifier = "local_linux",
 )
 
 toolchain(
@@ -202,6 +205,7 @@ cc_toolchain(
     static_runtime_libs = [":empty"],
     strip_files = ":empty",
     supports_param_files = 1,
+    toolchain_identifier = "local_linux",
 )
 
 toolchain(
@@ -230,6 +234,7 @@ cc_toolchain(
     static_runtime_libs = [":empty"],
     strip_files = ":empty",
     supports_param_files = 0,
+    toolchain_identifier = "local_darwin",
 )
 
 toolchain(
@@ -258,6 +263,7 @@ cc_toolchain(
     static_runtime_libs = [":empty"],
     strip_files = ":empty",
     supports_param_files = 0,
+    toolchain_identifier = "local_freebsd",
 )
 
 toolchain(
@@ -286,6 +292,7 @@ cc_toolchain(
     static_runtime_libs = [":empty"],
     strip_files = ":empty",
     supports_param_files = 0,
+    toolchain_identifier = "local_windows_msys64",
 )
 
 toolchain(
@@ -314,6 +321,7 @@ cc_toolchain(
     static_runtime_libs = [":empty"],
     strip_files = ":empty",
     supports_param_files = 1,
+    toolchain_identifier = "vc_14_0_x64",
 )
 
 toolchain(

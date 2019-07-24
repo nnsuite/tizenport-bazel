@@ -49,6 +49,10 @@ import java.util.List;
  *
  *   <li>Update manual documentation in site/docs/skylark/backward-compatibility.md. Also remember
  *       to update this when flipping a flag's default value.
+ *
+ *   <li>Boolean semantic flags can toggle Skylark methods on or off. To do this, add a new entry
+ *       to {@link SkylarkSemantics#FlagIdentifier}. Then, specify the identifier in
+ *       {@code SkylarkCallable.enableOnlyWithFlag} or {@code SkylarkCallable.disableWithFlag}.
  * </ul>
  * For both readability and correctness, the relative order of the options in all of these locations
  * must be kept consistent; to make it easy we use alphabetic order. The parts that need updating
@@ -315,6 +319,20 @@ public class SkylarkSemanticsOptions extends OptionsBase implements Serializable
   public boolean incompatibleNoSupportToolsInActionInputs;
 
   @Option(
+      name = "incompatible_no_transitive_loads",
+      defaultValue = "false",
+      documentationCategory = OptionDocumentationCategory.SKYLARK_SEMANTICS,
+      effectTags = {OptionEffectTag.BUILD_FILE_SEMANTICS},
+      metadataTags = {
+        OptionMetadataTag.INCOMPATIBLE_CHANGE,
+        OptionMetadataTag.TRIGGERED_BY_ALL_INCOMPATIBLE_CHANGES
+      },
+      help =
+          "If set to true, only symbols explicitly defined in the file can be loaded; "
+              + "symbols introduced by load are not implicitly re-exported.")
+  public boolean incompatibleNoTransitiveLoads;
+
+  @Option(
       name = "incompatible_package_name_is_a_function",
       defaultValue = "false",
       documentationCategory = OptionDocumentationCategory.SKYLARK_SEMANTICS,
@@ -412,7 +430,7 @@ public class SkylarkSemanticsOptions extends OptionsBase implements Serializable
 
   @Option(
       name = "incompatible_never_use_embedded_jdk_for_javabase",
-      defaultValue = "false",
+      defaultValue = "true",
       documentationCategory = OptionDocumentationCategory.UNDOCUMENTED,
       effectTags = {OptionEffectTag.UNKNOWN},
       metadataTags = {
@@ -447,6 +465,7 @@ public class SkylarkSemanticsOptions extends OptionsBase implements Serializable
         .incompatibleGenerateJavaCommonSourceJar(incompatibleGenerateJavaCommonSourceJar)
         .incompatibleNewActionsApi(incompatibleNewActionsApi)
         .incompatibleNoSupportToolsInActionInputs(incompatibleNoSupportToolsInActionInputs)
+        .incompatibleNoTransitiveLoads(incompatibleNoTransitiveLoads)
         .incompatiblePackageNameIsAFunction(incompatiblePackageNameIsAFunction)
         .incompatibleRangeType(incompatibleRangeType)
         .incompatibleRemoveNativeGitRepository(incompatibleRemoveNativeGitRepository)

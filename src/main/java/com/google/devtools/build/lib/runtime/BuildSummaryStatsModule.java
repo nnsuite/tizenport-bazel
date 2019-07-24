@@ -45,7 +45,7 @@ public class BuildSummaryStatsModule extends BlazeModule {
   private static final Logger logger = Logger.getLogger(BuildSummaryStatsModule.class.getName());
 
   private ActionKeyContext actionKeyContext;
-  private SimpleCriticalPathComputer criticalPathComputer;
+  private CriticalPathComputer criticalPathComputer;
   private EventBus eventBus;
   private Reporter reporter;
   private boolean enabled;
@@ -80,7 +80,7 @@ public class BuildSummaryStatsModule extends BlazeModule {
   public void executionPhaseStarting(ExecutionStartingEvent event) {
     if (enabled) {
       criticalPathComputer =
-          new SimpleCriticalPathComputer(actionKeyContext, BlazeClock.instance(), discardActions);
+          new CriticalPathComputer(actionKeyContext, BlazeClock.instance(), discardActions);
       eventBus.register(criticalPathComputer);
     }
   }
@@ -103,7 +103,7 @@ public class BuildSummaryStatsModule extends BlazeModule {
       if (criticalPathComputer != null) {
         try (SilentCloseable c =
             Profiler.instance().profile(ProfilerTask.CRITICAL_PATH, "Critical path")) {
-          AggregatedCriticalPath<SimpleCriticalPathComponent> criticalPath =
+          AggregatedCriticalPath criticalPath =
               criticalPathComputer.aggregate();
           items.add(criticalPath.toStringSummary());
           statistics.add(
@@ -115,7 +115,7 @@ public class BuildSummaryStatsModule extends BlazeModule {
           // We reverse the critical path because the profiler expect events ordered by the time
           // when the actions were executed while critical path computation is stored in the reverse
           // way.
-          for (SimpleCriticalPathComponent stat : criticalPath.components().reverse()) {
+          for (CriticalPathComponent stat : criticalPath.components().reverse()) {
             Profiler.instance()
                 .logSimpleTaskDuration(
                     stat.getStartTimeNanos(),
@@ -132,7 +132,7 @@ public class BuildSummaryStatsModule extends BlazeModule {
       reporter.handle(Event.info(spawnSummary));
       statistics.add(Pair.of("process stats", ByteString.copyFromUtf8(spawnSummary)));
 
-      reporter.post(new BuildToolLogs(statistics, ImmutableList.of()));
+      reporter.post(new BuildToolLogs(statistics, ImmutableList.of(), ImmutableList.of()));
     } finally {
       criticalPathComputer = null;
     }

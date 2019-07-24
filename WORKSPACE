@@ -75,18 +75,6 @@ new_local_repository(
 )
 
 new_local_repository(
-    name = "com_google_protobuf_cc",
-    build_file = "./third_party/protobuf/3.6.1/BUILD",
-    path = "./third_party/protobuf/3.6.1/",
-)
-
-new_local_repository(
-    name = "com_google_protobuf_java",
-    build_file = "./third_party/protobuf/3.6.1/com_google_protobuf_java.BUILD",
-    path = "./third_party/protobuf/3.6.1/",
-)
-
-new_local_repository(
     name = "googleapis",
     build_file = "./third_party/googleapis/BUILD",
     path = "./third_party/googleapis/",
@@ -134,6 +122,18 @@ http_file(
     ],
 )
 
+# Used by CI to test Bazel on platforms without an installed system JDK.
+# TODO(twerth): Migrate to @remotejdk when https://github.com/bazelbuild/bazel/pull/6216 is merged.
+new_http_archive(
+    name = "openjdk_linux_archive",
+    sha256 = "f27cb933de4f9e7fe9a703486cf44c84bc8e9f138be0c270c9e5716a32367e87",
+    urls = [
+        "https://mirror.bazel.build/openjdk/azul-zulu-9.0.7.1-jdk9.0.7/zulu9.0.7.1-jdk9.0.7-linux_x64-allmodules.tar.gz",
+    ],
+    strip_prefix = "zulu9.0.7.1-jdk9.0.7-linux_x64-allmodules",
+    build_file_content = "java_runtime(name = 'runtime', srcs =  glob(['**']), visibility = ['//visibility:public'])",
+)
+
 http_file(
     name = "openjdk_macos",
     sha256 = "404e7058ff91f956612f47705efbee8e175a38b505fb1b52d8c1ea98718683de",
@@ -163,11 +163,11 @@ http_file(
 
 http_archive(
     name = "bazel_toolchains",
-    sha256 = "cefb6ccf86ca592baaa029bcef04148593c0efe8f734542f10293ea58f170715",
-    strip_prefix = "bazel-toolchains-cdea5b8675914d0a354d89f108de5d28e54e0edc",
+    sha256 = "fa1459abc7d89db728da424176f5f424e78cb8ad7a3d03d8bfa0c5c4a56b7398",
+    strip_prefix = "bazel-toolchains-42619b5476b7c8a2f5117f127d5772cc46da2d1d",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/archive/cdea5b8675914d0a354d89f108de5d28e54e0edc.tar.gz",
-        "https://github.com/bazelbuild/bazel-toolchains/archive/cdea5b8675914d0a354d89f108de5d28e54e0edc.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/archive/42619b5476b7c8a2f5117f127d5772cc46da2d1d.tar.gz",
+        "https://github.com/bazelbuild/bazel-toolchains/archive/42619b5476b7c8a2f5117f127d5772cc46da2d1d.tar.gz",
     ],
 )
 

@@ -606,19 +606,18 @@ public class CppHelper {
             configuration.getMiddlemanDirectory(ruleContext.getRule().getRepository())));
   }
 
-  /**
-   * Returns the FDO build subtype.
-   */
-  public static String getFdoBuildStamp(RuleContext ruleContext, FdoProvider fdoProvider) {
+  /** Returns the FDO build subtype. */
+  public static String getFdoBuildStamp(
+      RuleContext ruleContext, FdoProvider fdoProvider, FeatureConfiguration featureConfiguration) {
     CppConfiguration cppConfiguration = ruleContext.getFragment(CppConfiguration.class);
     if (fdoProvider.getFdoMode() == FdoMode.AUTO_FDO) {
-      return "AFDO";
+      return featureConfiguration.isEnabled(CppRuleClasses.AUTOFDO) ? "AFDO" : null;
+    }
+    if (fdoProvider.getFdoMode() == FdoMode.XBINARY_FDO) {
+      return featureConfiguration.isEnabled(CppRuleClasses.XBINARYFDO) ? "XFDO" : null;
     }
     if (cppConfiguration.isFdo()) {
       return "FDO";
-    }
-    if (fdoProvider.getFdoMode() == FdoMode.XBINARY_FDO) {
-      return "XFDO";
     }
     return null;
   }
@@ -811,4 +810,14 @@ public class CppHelper {
     return toolchain.supportsInterfaceSharedObjects() && config.getUseInterfaceSharedObjects();
   }
 
+  public static CcNativeLibraryProvider collectNativeCcLibraries(
+      List<? extends TransitiveInfoCollection> deps, CcLinkingOutputs ccLinkingOutputs) {
+    NestedSetBuilder<LinkerInput> result = NestedSetBuilder.linkOrder();
+    result.addAll(ccLinkingOutputs.getDynamicLibrariesForLinking());
+    for (CcNativeLibraryProvider dep :
+        AnalysisUtils.getProviders(deps, CcNativeLibraryProvider.class)) {
+      result.addTransitive(dep.getTransitiveCcNativeLibraries());
+    }
+    return new CcNativeLibraryProvider(result.build());
+  }
 }

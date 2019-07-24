@@ -81,6 +81,19 @@ public class RepositoryOptions extends OptionsBase {
   public List<RepositoryOverride> repositoryOverrides;
 
   @Option(
+      name = "experimental_scale_timeouts",
+      defaultValue = "1.0",
+      documentationCategory = OptionDocumentationCategory.BAZEL_CLIENT_OPTIONS,
+      effectTags = {OptionEffectTag.BAZEL_INTERNAL_CONFIGURATION},
+      metadataTags = {OptionMetadataTag.EXPERIMENTAL},
+      help =
+          "Scale all timeouts in Starlark repository rules by this factor."
+              + " In this way, external repositories can be made working on machines"
+              + " that are slower than the rule author expected, without changing the"
+              + " source code")
+  public double experimentalScaleTimeouts;
+
+  @Option(
       name = "experimental_repository_hash_file",
       defaultValue = "",
       documentationCategory = OptionDocumentationCategory.INPUT_STRICTNESS,
@@ -103,6 +116,14 @@ public class RepositoryOptions extends OptionsBase {
               + " verified, provided a file is specified by"
               + " --experimental_respository_hash_file.")
   public List<String> experimentalVerifyRepositoryRules;
+
+  @Option(
+      name = "experimental_resolved_file_instead_of_workspace",
+      defaultValue = "",
+      documentationCategory = OptionDocumentationCategory.GENERIC_INPUTS,
+      effectTags = {OptionEffectTag.CHANGES_INPUTS},
+      help = "If non-empty read the specifed resolved file instead of the WORKSPACE file")
+  public String experimentalResolvedFileInsteadOfWorkspace;
 
   /**
    * Converts from an equals-separated pair of strings into RepositoryName->PathFragment mapping.

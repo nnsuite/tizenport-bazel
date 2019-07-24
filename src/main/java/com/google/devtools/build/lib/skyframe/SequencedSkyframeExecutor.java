@@ -171,7 +171,9 @@ public final class SequencedSkyframeExecutor extends SkyframeExecutor {
         GraphInconsistencyReceiver.THROWING,
         defaultBuildOptions,
         new PackageProgressReceiver(),
-        mutableArtifactFactorySupplier);
+        mutableArtifactFactorySupplier,
+        new ConfiguredTargetProgressReceiver(),
+        /*nonexistentFileReceiver=*/ null);
     this.diffAwarenessManager = new DiffAwarenessManager(diffAwarenessFactories);
     this.customDirtinessCheckers = customDirtinessCheckers;
   }
@@ -193,6 +195,7 @@ public final class SequencedSkyframeExecutor extends SkyframeExecutor {
       ActionOnIOExceptionReadingBuildFile actionOnIOExceptionReadingBuildFile,
       BuildOptions defaultBuildOptions) {
     return create(
+        InMemoryMemoizingEvaluator.SUPPLIER,
         pkgFactory,
         fileSystem,
         directories,
@@ -212,6 +215,7 @@ public final class SequencedSkyframeExecutor extends SkyframeExecutor {
   }
 
   public static SequencedSkyframeExecutor create(
+      EvaluatorSupplier evaluatorSupplier,
       PackageFactory pkgFactory,
       FileSystem fileSystem,
       BlazeDirectories directories,
@@ -230,7 +234,7 @@ public final class SequencedSkyframeExecutor extends SkyframeExecutor {
       MutableArtifactFactorySupplier mutableArtifactFactorySupplier) {
     SequencedSkyframeExecutor skyframeExecutor =
         new SequencedSkyframeExecutor(
-            InMemoryMemoizingEvaluator.SUPPLIER,
+            evaluatorSupplier,
             pkgFactory,
             fileSystem,
             directories,

@@ -116,6 +116,7 @@ public class BazelRepositoryModule extends BlazeModule {
       new MutableSupplier<>();
   private ImmutableMap<RepositoryName, PathFragment> overrides = ImmutableMap.of();
   private Optional<RootedPath> resolvedFile = Optional.<RootedPath>absent();
+  private Optional<RootedPath> resolvedFileReplacingWorkspace = Optional.<RootedPath>absent();
   private Set<String> outputVerificationRules = ImmutableSet.<String>of();
   private FileSystem filesystem;
 
@@ -235,11 +236,13 @@ public class BazelRepositoryModule extends BlazeModule {
     PackageCacheOptions pkgOptions = env.getOptions().getOptions(PackageCacheOptions.class);
     isFetch.set(pkgOptions != null && pkgOptions.fetch);
     resolvedFile = Optional.<RootedPath>absent();
+    resolvedFileReplacingWorkspace = Optional.<RootedPath>absent();
     outputVerificationRules = ImmutableSet.<String>of();
 
     RepositoryOptions repoOptions = env.getOptions().getOptions(RepositoryOptions.class);
     if (repoOptions != null) {
       repositoryCache.setHardlink(repoOptions.useHardlinks);
+      skylarkRepositoryFunction.setTimeoutScaling(repoOptions.experimentalScaleTimeouts);
       if (repoOptions.experimentalRepositoryCache != null) {
         Path repositoryCachePath;
         if (repoOptions.experimentalRepositoryCache.isAbsolute()) {
@@ -298,11 +301,27 @@ public class BazelRepositoryModule extends BlazeModule {
       }
 
       if (!Strings.isNullOrEmpty(repoOptions.repositoryHashFile)) {
+        Path hashFile;
+        if (env.getWorkspace() != null) {
+          hashFile = env.getWorkspace().getRelative(repoOptions.repositoryHashFile);
+        } else {
+          hashFile = filesystem.getPath(repoOptions.repositoryHashFile);
+        }
         resolvedFile =
-            Optional.of(
-                RootedPath.toRootedPath(
-                    Root.absoluteRoot(filesystem),
-                    filesystem.getPath(repoOptions.repositoryHashFile)));
+            Optional.of(RootedPath.toRootedPath(Root.absoluteRoot(filesystem), hashFile));
+      }
+
+      if (!Strings.isNullOrEmpty(repoOptions.experimentalResolvedFileInsteadOfWorkspace)) {
+        Path resolvedFile;
+        if (env.getWorkspace() != null) {
+          resolvedFile =
+              env.getWorkspace()
+                  .getRelative(repoOptions.experimentalResolvedFileInsteadOfWorkspace);
+        } else {
+          resolvedFile = filesystem.getPath(repoOptions.experimentalResolvedFileInsteadOfWorkspace);
+        }
+        resolvedFileReplacingWorkspace =
+            Optional.of(RootedPath.toRootedPath(Root.absoluteRoot(filesystem), resolvedFile));
       }
 
       if (repoOptions.experimentalVerifyRepositoryRules != null) {
@@ -321,6 +340,9 @@ public class BazelRepositoryModule extends BlazeModule {
         PrecomputedValue.injected(
             RepositoryDelegatorFunction.OUTPUT_VERIFICATION_REPOSITORY_RULES,
             outputVerificationRules),
+        PrecomputedValue.injected(
+            RepositoryDelegatorFunction.RESOLVED_FILE_INSTEAD_OF_WORKSPACE,
+            resolvedFileReplacingWorkspace),
         // That key will be reinjected by the sync command with a universally unique identifier.
         // Nevertheless, we need to provide a default value for other commands.
         PrecomputedValue.injected(

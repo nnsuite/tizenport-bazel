@@ -792,6 +792,7 @@ toolchain {
       flag_group {
         flag: "-fprofile-generate=%{fdo_instrument_path}"
         flag: "-fno-data-sections"
+        expand_if_all_available: "fdo_instrument_path"
       }
     }
     provides: "profile"
@@ -1065,8 +1066,8 @@ toolchain {
       action: "objc-executable"
       action: "objc++-executable"
       flag_group {
-        flag: "--dead_strip"
-        flag: "--no_dead_strip_inits_and_terms"
+        flag: "-dead_strip"
+        flag: "-no_dead_strip_inits_and_terms"
       }
     }
     requires {
@@ -2450,6 +2451,7 @@ toolchain {
       flag_group {
         flag: "-fprofile-generate=%{fdo_instrument_path}"
         flag: "-fno-data-sections"
+        expand_if_all_available: "fdo_instrument_path"
       }
     }
     provides: "profile"
@@ -2724,8 +2726,8 @@ toolchain {
       action: "objc-executable"
       action: "objc++-executable"
       flag_group {
-        flag: "--dead_strip"
-        flag: "--no_dead_strip_inits_and_terms"
+        flag: "-dead_strip"
+        flag: "-no_dead_strip_inits_and_terms"
       }
     }
     requires {
@@ -4115,6 +4117,7 @@ toolchain {
       flag_group {
         flag: "-fprofile-generate=%{fdo_instrument_path}"
         flag: "-fno-data-sections"
+        expand_if_all_available: "fdo_instrument_path"
       }
     }
     provides: "profile"
@@ -4391,8 +4394,8 @@ toolchain {
       action: "objc-executable"
       action: "objc++-executable"
       flag_group {
-        flag: "--dead_strip"
-        flag: "--no_dead_strip_inits_and_terms"
+        flag: "-dead_strip"
+        flag: "-no_dead_strip_inits_and_terms"
       }
     }
     requires {
@@ -5783,6 +5786,7 @@ toolchain {
       flag_group {
         flag: "-fprofile-generate=%{fdo_instrument_path}"
         flag: "-fno-data-sections"
+        expand_if_all_available: "fdo_instrument_path"
       }
     }
     provides: "profile"
@@ -6057,8 +6061,8 @@ toolchain {
       action: "objc-executable"
       action: "objc++-executable"
       flag_group {
-        flag: "--dead_strip"
-        flag: "--no_dead_strip_inits_and_terms"
+        flag: "-dead_strip"
+        flag: "-no_dead_strip_inits_and_terms"
       }
     }
     requires {
@@ -7478,6 +7482,7 @@ toolchain {
       flag_group {
         flag: "-fprofile-generate=%{fdo_instrument_path}"
         flag: "-fno-data-sections"
+        expand_if_all_available: "fdo_instrument_path"
       }
     }
     provides: "profile"
@@ -7752,8 +7757,8 @@ toolchain {
       action: "objc-executable"
       action: "objc++-executable"
       flag_group {
-        flag: "--dead_strip"
-        flag: "--no_dead_strip_inits_and_terms"
+        flag: "-dead_strip"
+        flag: "-no_dead_strip_inits_and_terms"
       }
     }
     requires {
@@ -9143,6 +9148,7 @@ toolchain {
       flag_group {
         flag: "-fprofile-generate=%{fdo_instrument_path}"
         flag: "-fno-data-sections"
+        expand_if_all_available: "fdo_instrument_path"
       }
     }
     provides: "profile"
@@ -9417,8 +9423,8 @@ toolchain {
       action: "objc-executable"
       action: "objc++-executable"
       flag_group {
-        flag: "--dead_strip"
-        flag: "--no_dead_strip_inits_and_terms"
+        flag: "-dead_strip"
+        flag: "-no_dead_strip_inits_and_terms"
       }
     }
     requires {
@@ -10796,6 +10802,7 @@ toolchain {
       flag_group {
         flag: "-fprofile-generate=%{fdo_instrument_path}"
         flag: "-fno-data-sections"
+        expand_if_all_available: "fdo_instrument_path"
       }
     }
     provides: "profile"
@@ -11072,8 +11079,8 @@ toolchain {
       action: "objc-executable"
       action: "objc++-executable"
       flag_group {
-        flag: "--dead_strip"
-        flag: "--no_dead_strip_inits_and_terms"
+        flag: "-dead_strip"
+        flag: "-no_dead_strip_inits_and_terms"
       }
     }
     requires {
@@ -12452,6 +12459,7 @@ toolchain {
       flag_group {
         flag: "-fprofile-generate=%{fdo_instrument_path}"
         flag: "-fno-data-sections"
+        expand_if_all_available: "fdo_instrument_path"
       }
     }
     provides: "profile"
@@ -12726,8 +12734,8 @@ toolchain {
       action: "objc-executable"
       action: "objc++-executable"
       flag_group {
-        flag: "--dead_strip"
-        flag: "--no_dead_strip_inits_and_terms"
+        flag: "-dead_strip"
+        flag: "-no_dead_strip_inits_and_terms"
       }
     }
     requires {
@@ -14135,6 +14143,7 @@ toolchain {
       flag_group {
         flag: "-fprofile-generate=%{fdo_instrument_path}"
         flag: "-fno-data-sections"
+        expand_if_all_available: "fdo_instrument_path"
       }
     }
     provides: "profile"
@@ -14409,8 +14418,8 @@ toolchain {
       action: "objc-executable"
       action: "objc++-executable"
       flag_group {
-        flag: "--dead_strip"
-        flag: "--no_dead_strip_inits_and_terms"
+        flag: "-dead_strip"
+        flag: "-no_dead_strip_inits_and_terms"
       }
     }
     requires {
@@ -15789,6 +15798,7 @@ toolchain {
       flag_group {
         flag: "-fprofile-generate=%{fdo_instrument_path}"
         flag: "-fno-data-sections"
+        expand_if_all_available: "fdo_instrument_path"
       }
     }
     provides: "profile"
@@ -16063,8 +16073,8 @@ toolchain {
       action: "objc-executable"
       action: "objc++-executable"
       flag_group {
-        flag: "--dead_strip"
-        flag: "--no_dead_strip_inits_and_terms"
+        flag: "-dead_strip"
+        flag: "-no_dead_strip_inits_and_terms"
       }
     }
     requires {

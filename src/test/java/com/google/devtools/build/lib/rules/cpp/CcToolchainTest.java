@@ -23,6 +23,7 @@ import com.google.devtools.build.lib.actions.util.ActionsTestUtil;
 import com.google.devtools.build.lib.analysis.ConfiguredTarget;
 import com.google.devtools.build.lib.analysis.RuleContext;
 import com.google.devtools.build.lib.analysis.platform.ToolchainInfo;
+import com.google.devtools.build.lib.analysis.util.AnalysisMock;
 import com.google.devtools.build.lib.analysis.util.BuildViewTestCase;
 import com.google.devtools.build.lib.packages.util.MockCcSupport;
 import com.google.devtools.build.lib.packages.util.ResourceLoader;
@@ -105,6 +106,7 @@ public class CcToolchainTest extends BuildViewTestCase {
                 .setSupportsInterfaceSharedObjects(false)
                 .buildPartial());
     useConfiguration();
+    invalidatePackages();
 
     ConfiguredTarget target = getConfiguredTarget("//a:b");
     CcToolchainProvider toolchainProvider =
@@ -115,6 +117,7 @@ public class CcToolchainTest extends BuildViewTestCase {
         .isFalse();
 
     useConfiguration("--interface_shared_objects");
+    invalidatePackages();
     target = getConfiguredTarget("//a:b");
     toolchainProvider = (CcToolchainProvider) target.get(ToolchainInfo.PROVIDER);
     assertThat(
@@ -130,6 +133,7 @@ public class CcToolchainTest extends BuildViewTestCase {
                 .setSupportsInterfaceSharedObjects(true)
                 .buildPartial());
     useConfiguration();
+    invalidatePackages();
 
     target = getConfiguredTarget("//a:b");
     toolchainProvider = (CcToolchainProvider) target.get(ToolchainInfo.PROVIDER);
@@ -139,6 +143,7 @@ public class CcToolchainTest extends BuildViewTestCase {
         .isTrue();
 
     useConfiguration("--nointerface_shared_objects");
+    invalidatePackages();
     target = getConfiguredTarget("//a:b");
     toolchainProvider = (CcToolchainProvider) target.get(ToolchainInfo.PROVIDER);
     assertThat(
@@ -337,6 +342,7 @@ public class CcToolchainTest extends BuildViewTestCase {
         "    objcopy_files = ':empty',",
         "    dynamic_runtime_libs = [':empty'],",
         "    static_runtime_libs = [':empty'])");
+    scratch.file("a/CROSSTOOL", AnalysisMock.get().ccSupport().readCrosstoolFile());
 
     // Check defaults.
     useConfiguration();
@@ -484,6 +490,7 @@ public class CcToolchainTest extends BuildViewTestCase {
                   .buildPartial());
 
       useConfiguration();
+      invalidatePackages();
 
       ConfiguredTarget target = getConfiguredTarget("//a:b");
       CcToolchainProvider toolchainProvider =
@@ -677,6 +684,7 @@ public class CcToolchainTest extends BuildViewTestCase {
         "fdo/BUILD",
         "exports_files(['my_profile.afdo'])",
         "fdo_profile(name = 'fdo', profile = ':my_profile.profdata')");
+    scratch.file("a/CROSSTOOL", AnalysisMock.get().ccSupport().readCrosstoolFile());
 
     useConfiguration();
     assertThat(getPrerequisites(getConfiguredTarget("//a:b"), ":zipper")).isEmpty();
@@ -686,53 +694,6 @@ public class CcToolchainTest extends BuildViewTestCase {
 
     useConfiguration("-c", "opt", "--fdo_profile=//fdo:fdo");
     assertThat(getPrerequisites(getConfiguredTarget("//a:b"), ":zipper")).isNotEmpty();
-  }
-
-  @Test
-  public void testInlineCtoolchain_withoutToolchainResolution() throws Exception {
-    scratch.file(
-        "a/BUILD",
-        "filegroup(",
-        "   name='empty')",
-        "cc_toolchain(",
-        "    name = 'b',",
-        "    cpu = 'banana',",
-        "    all_files = ':empty',",
-        "    ar_files = ':empty',",
-        "    as_files = ':empty',",
-        "    compiler_files = ':empty',",
-        "    dwp_files = ':empty',",
-        "    linker_files = ':empty',",
-        "    strip_files = ':empty',",
-        "    objcopy_files = ':empty',",
-        "    dynamic_runtime_libs = [':empty'],",
-        "    static_runtime_libs = [':empty'],",
-        "    proto=\"\"\"",
-        "      toolchain_identifier: \"banana\"",
-        "      abi_version: \"banana\"",
-        "      abi_libc_version: \"banana\"",
-        "      compiler: \"banana\"",
-        "      host_system_name: \"banana\"",
-        "      target_system_name: \"banana\"",
-        "      target_cpu: \"banana\"",
-        "      target_libc: \"banana\"",
-        "    \"\"\")");
-
-    getAnalysisMock()
-        .ccSupport()
-        .setupCrosstool(mockToolsConfig, CrosstoolConfig.CToolchain.newBuilder()
-            .setAbiVersion("orange")
-            .buildPartial());
-
-    useConfiguration();
-
-    ConfiguredTarget target = getConfiguredTarget("//a:b");
-    CcToolchainProvider toolchainProvider =
-        (CcToolchainProvider) target.get(ToolchainInfo.PROVIDER);
-
-    // Without toolchain resolution, this should get the toolchain from the CROSSTOOL, not the
-    // static version in the target.
-    assertThat(toolchainProvider.getAbi()).isEqualTo("orange");
   }
 
   @Test
@@ -810,6 +771,7 @@ public class CcToolchainTest extends BuildViewTestCase {
         "    dynamic_runtime_libs = [':empty'],",
         "    static_runtime_libs = [':empty'],",
         "    toolchain_config = ':toolchain_config')");
+    scratch.file("a/CROSSTOOL", AnalysisMock.get().ccSupport().readCrosstoolFile());
 
     scratch.file(
         "a/crosstool_rule.bzl",

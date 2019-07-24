@@ -44,7 +44,6 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Caches the results of glob expansion for a package.
  */
-  // Used outside of Bazel!
 @ThreadSafety.ThreadCompatible
 public class GlobCache {
   /**
@@ -210,7 +209,7 @@ public class GlobCache {
         .setDirectoryFilter(childDirectoryPredicate)
         .setThreadPool(globExecutor)
         .setFilesystemCalls(syscalls)
-        .globAsync(true);
+        .globAsync();
   }
 
   /**

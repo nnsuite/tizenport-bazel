@@ -234,6 +234,13 @@ EOF
       "${BAZEL_TOOLS_REPO}/tools/cpp/runfiles/runfiles.cc"
   link_file "${PWD}/tools/cpp/runfiles/BUILD.tools" \
       "${BAZEL_TOOLS_REPO}/tools/cpp/runfiles/BUILD"
+
+  # Create @bazel_tools//tools/sh
+  mkdir -p ${BAZEL_TOOLS_REPO}/tools/sh
+  link_file "${PWD}/tools/sh/sh_configure.bzl" "${BAZEL_TOOLS_REPO}/tools/sh/sh_configure.bzl"
+  link_file "${PWD}/tools/sh/sh_toolchain.bzl" "${BAZEL_TOOLS_REPO}/tools/sh/sh_toolchain.bzl"
+  link_file "${PWD}/tools/sh/BUILD.tools" "${BAZEL_TOOLS_REPO}/tools/sh/BUILD"
+
   # Create the rest of @bazel_tools//tools/...
   link_children "${PWD}" tools/cpp "${BAZEL_TOOLS_REPO}"
   link_children "${PWD}" tools "${BAZEL_TOOLS_REPO}"
@@ -350,7 +357,7 @@ function run_bazel_jar() {
   local env_vars="$(awk 'END { for (name in ENVIRON) { if(name != "_" && name ~ /^[A-Za-z0-9_]*$/) print name; } }' </dev/null)"
   for varname in $env_vars; do
     eval value=\$$varname
-    if [ "${PLATFORM}" = "windows" ] && echo "$varname" | grep -q -i "^\(path\|tmp\|temp\|tempdir\|systemroot\)$" ; then
+    if [ "${PLATFORM}" = "windows" ] && echo "$varname" | grep -q -i "^\(path\|tmp\|temp\|tempdir\|systemroot\|systemdrive\)$" ; then
       varname="$(echo "$varname" | tr [:lower:] [:upper:])"
     fi
     if [ "${value}" ]; then

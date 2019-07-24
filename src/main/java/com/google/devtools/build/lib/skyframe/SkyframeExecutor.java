@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Range;
+import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 import com.google.devtools.build.lib.actions.ActionAnalysisMetadata;
 import com.google.devtools.build.lib.actions.ActionCacheChecker;
@@ -123,6 +124,7 @@ import com.google.devtools.build.lib.skyframe.AspectValue.AspectValueKey;
 import com.google.devtools.build.lib.skyframe.CompletionFunction.PathResolverFactory;
 import com.google.devtools.build.lib.skyframe.DirtinessCheckerUtils.FileDirtinessChecker;
 import com.google.devtools.build.lib.skyframe.ExternalFilesHelper.ExternalFileAction;
+import com.google.devtools.build.lib.skyframe.FileFunction.NonexistentFileReceiver;
 import com.google.devtools.build.lib.skyframe.PackageFunction.ActionOnIOExceptionReadingBuildFile;
 import com.google.devtools.build.lib.skyframe.PackageFunction.IncrementalityIntent;
 import com.google.devtools.build.lib.skyframe.PackageFunction.LoadedPackageCacheEntry;
@@ -230,6 +232,7 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
 
   private final AtomicInteger numPackagesLoaded = new AtomicInteger(0);
   @Nullable private final PackageProgressReceiver packageProgress;
+  @Nullable private final ConfiguredTargetProgressReceiver configuredTargetProgress;
 
   private final SkyframeBuildView skyframeBuildView;
   private ActionLogBufferPathGenerator actionLogBufferPathGenerator;
@@ -309,6 +312,7 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
   private static final Logger logger = Logger.getLogger(SkyframeExecutor.class.getName());
 
   private final PathResolverFactory pathResolverFactory = new PathResolverFactoryImpl();
+  @Nullable private final NonexistentFileReceiver nonexistentFileReceiver;
 
   /** An {@link ArtifactResolverSupplier} that supports setting of an {@link ArtifactFactory}. */
   public static class MutableArtifactFactorySupplier implements ArtifactResolverSupplier {
@@ -363,13 +367,16 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
       GraphInconsistencyReceiver graphInconsistencyReceiver,
       BuildOptions defaultBuildOptions,
       @Nullable PackageProgressReceiver packageProgress,
-      MutableArtifactFactorySupplier artifactResolverSupplier) {
+      MutableArtifactFactorySupplier artifactResolverSupplier,
+      @Nullable ConfiguredTargetProgressReceiver configuredTargetProgress,
+      @Nullable NonexistentFileReceiver nonexistentFileReceiver) {
     // Strictly speaking, these arguments are not required for initialization, but all current
     // callsites have them at hand, so we might as well set them during construction.
     this.evaluatorSupplier = evaluatorSupplier;
     this.pkgFactory = pkgFactory;
     this.shouldUnblockCpuWorkWhenFetchingDeps = shouldUnblockCpuWorkWhenFetchingDeps;
     this.graphInconsistencyReceiver = graphInconsistencyReceiver;
+    this.nonexistentFileReceiver = nonexistentFileReceiver;
     this.pkgFactory.setSyscalls(syscalls);
     this.workspaceStatusActionFactory = workspaceStatusActionFactory;
     this.packageManager = new SkyframePackageManager(
@@ -406,6 +413,7 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
     this.buildFilesByPriority = buildFilesByPriority;
     this.actionOnIOExceptionReadingBuildFile = actionOnIOExceptionReadingBuildFile;
     this.packageProgress = packageProgress;
+    this.configuredTargetProgress = configuredTargetProgress;
   }
 
   private ImmutableMap<SkyFunctionName, SkyFunction> skyFunctions(
@@ -430,7 +438,7 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
         new FileSymlinkCycleUniquenessFunction());
     map.put(SkyFunctions.FILE_SYMLINK_INFINITE_EXPANSION_UNIQUENESS,
         new FileSymlinkInfiniteExpansionUniquenessFunction());
-    map.put(FileValue.FILE, new FileFunction(pkgLocator));
+    map.put(FileValue.FILE, new FileFunction(pkgLocator, nonexistentFileReceiver));
     map.put(SkyFunctions.DIRECTORY_LISTING, new DirectoryListingFunction());
     map.put(
         SkyFunctions.PACKAGE_LOOKUP,
@@ -489,7 +497,8 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
             cpuBoundSemaphore,
             shouldStoreTransitivePackagesInLoadingAndAnalysis(),
             shouldUnblockCpuWorkWhenFetchingDeps,
-            defaultBuildOptions));
+            defaultBuildOptions,
+            configuredTargetProgress));
     map.put(
         SkyFunctions.ASPECT,
         new AspectFunction(
@@ -1036,6 +1045,10 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
     return pkgLocator.get().getPathEntries();
   }
 
+  public AtomicReference<PathPackageLocator> getPackageLocator() {
+    return pkgLocator;
+  }
+
   protected abstract void invalidate(Predicate<SkyKey> pred);
 
   private static boolean compatibleFileTypes(Dirent.Type oldType, FileStateType newType) {
@@ -1262,6 +1275,11 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
       Set<String> multiCpu,
       boolean keepGoing)
       throws InvalidConfigurationException {
+
+    if (configuredTargetProgress != null) {
+      configuredTargetProgress.reset();
+    }
+
     List<BuildConfiguration> topLevelTargetConfigs =
         getConfigurations(
             eventHandler,
@@ -1289,7 +1307,8 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
 
   /**
    * Asks the Skyframe evaluator to build the given artifacts and targets, and to test the given
-   * test targets.
+   * parallel test targets. Additionally, exclusive tests are built together with all the other
+   * tests but they are intentionally *not* run since they must be executed separately one-by-one.
    */
   public EvaluationResult<?> buildArtifacts(
       Reporter reporter,
@@ -1297,8 +1316,8 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
       Set<Artifact> artifactsToBuild,
       Collection<ConfiguredTarget> targetsToBuild,
       Collection<AspectValue> aspects,
-      Set<ConfiguredTarget> targetsToTest,
-      boolean exclusiveTesting,
+      Set<ConfiguredTarget> parallelTests,
+      Set<ConfiguredTarget> exclusiveTests,
       OptionsProvider options,
       ActionCacheChecker actionCacheChecker,
       @Nullable EvaluationProgressReceiver executionProgressReceiver,
@@ -1321,12 +1340,52 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
     try {
       progressReceiver.executionProgressReceiver = executionProgressReceiver;
       Iterable<TargetCompletionValue.TargetCompletionKey> targetKeys =
-          TargetCompletionValue.keys(targetsToBuild, topLevelArtifactContext, targetsToTest);
+          TargetCompletionValue.keys(
+              targetsToBuild, topLevelArtifactContext, Sets.union(parallelTests, exclusiveTests));
       Iterable<SkyKey> aspectKeys = AspectCompletionValue.keys(aspects, topLevelArtifactContext);
       Iterable<SkyKey> testKeys =
-          TestCompletionValue.keys(targetsToTest, topLevelArtifactContext, exclusiveTesting);
+          TestCompletionValue.keys(
+              parallelTests, topLevelArtifactContext, /*exclusiveTesting=*/ false);
       return buildDriver.evaluate(
           Iterables.concat(artifactsToBuild, targetKeys, aspectKeys, testKeys),
+          options.getOptions(KeepGoingOption.class).keepGoing,
+          options.getOptions(BuildRequestOptions.class).getJobs(),
+          reporter);
+    } finally {
+      progressReceiver.executionProgressReceiver = null;
+      // Also releases thread locks.
+      resourceManager.resetResourceUsage();
+      skyframeActionExecutor.executionOver();
+      actionExecutionFunction.complete();
+    }
+  }
+
+  /** Asks the Skyframe evaluator to run a single exclusive test. */
+  public EvaluationResult<?> runExclusiveTest(
+      Reporter reporter,
+      Executor executor,
+      ConfiguredTarget exclusiveTest,
+      OptionsProvider options,
+      ActionCacheChecker actionCacheChecker,
+      @Nullable EvaluationProgressReceiver executionProgressReceiver,
+      TopLevelArtifactContext topLevelArtifactContext)
+      throws InterruptedException {
+    checkActive();
+    Preconditions.checkState(actionLogBufferPathGenerator != null);
+
+    try (SilentCloseable c =
+        Profiler.instance().profile("skyframeActionExecutor.prepareForExecution")) {
+      skyframeActionExecutor.prepareForExecution(
+          reporter, executor, options, actionCacheChecker, outputService);
+    }
+
+    resourceManager.resetResourceUsage();
+    try {
+      Iterable<SkyKey> testKeys =
+          TestCompletionValue.keys(
+              ImmutableSet.of(exclusiveTest), topLevelArtifactContext, /*exclusiveTesting=*/ true);
+      return buildDriver.evaluate(
+          testKeys,
           options.getOptions(KeepGoingOption.class).keepGoing,
           options.getOptions(BuildRequestOptions.class).getJobs(),
           reporter);
@@ -1878,6 +1937,7 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
     for (AspectValueKey aspectKey : aspectKeys) {
       keys.add(aspectKey);
     }
+    eventHandler.post(new ConfigurationPhaseStartedEvent(configuredTargetProgress));
     EvaluationResult<ActionLookupValue> result =
         buildDriver.evaluate(
             keys,
@@ -2349,6 +2409,10 @@ public abstract class SkyframeExecutor implements WalkableGraphFactory {
       }
       throw new IllegalStateException(
           "Unknown error during configuration creation evaluation", e);
+    }
+
+    if (configuredTargetProgress != null) {
+      configuredTargetProgress.reset();
     }
 
     PrepareAnalysisPhaseValue prepareAnalysisPhaseValue = evalResult.get(key);

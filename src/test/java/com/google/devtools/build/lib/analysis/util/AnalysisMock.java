@@ -24,9 +24,10 @@ import com.google.devtools.build.lib.bazel.rules.android.AndroidSdkRepositoryFun
 import com.google.devtools.build.lib.bazel.rules.android.AndroidSdkRepositoryRule;
 import com.google.devtools.build.lib.packages.util.LoadingMock;
 import com.google.devtools.build.lib.packages.util.MockCcSupport;
+import com.google.devtools.build.lib.packages.util.MockPythonSupport;
 import com.google.devtools.build.lib.packages.util.MockToolsConfig;
+import com.google.devtools.build.lib.rules.cpp.CcSkyframeSupportFunction;
 import com.google.devtools.build.lib.rules.cpp.CcSkyframeSupportValue;
-import com.google.devtools.build.lib.rules.cpp.CcSupportFunction;
 import com.google.devtools.build.lib.rules.repository.LocalRepositoryFunction;
 import com.google.devtools.build.lib.rules.repository.LocalRepositoryRule;
 import com.google.devtools.build.lib.rules.repository.RepositoryDelegatorFunction;
@@ -114,6 +115,8 @@ public abstract class AnalysisMock extends LoadingMock {
 
   public abstract MockCcSupport ccSupport();
 
+  public abstract MockPythonSupport pySupport();
+
   public void setupCcSupport(MockToolsConfig config) throws IOException {
     get().ccSupport().setup(config);
   }
@@ -133,7 +136,7 @@ public abstract class AnalysisMock extends LoadingMock {
         SkyFunctions.REPOSITORY,
         new RepositoryLoaderFunction(),
         CcSkyframeSupportValue.SKYFUNCTION,
-        new CcSupportFunction(directories));
+        new CcSkyframeSupportFunction(directories));
   }
 
   public static class Delegate extends AnalysisMock {
@@ -181,6 +184,11 @@ public abstract class AnalysisMock extends LoadingMock {
     @Override
     public MockCcSupport ccSupport() {
       return delegate.ccSupport();
+    }
+
+    @Override
+    public MockPythonSupport pySupport() {
+      return delegate.pySupport();
     }
 
     @Override

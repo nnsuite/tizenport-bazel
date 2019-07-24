@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.build.lib.actions.Artifact;
 import com.google.devtools.build.lib.analysis.RuleContext;
+import com.google.devtools.build.lib.analysis.TransitiveInfoProviderMapBuilder;
 import com.google.devtools.build.lib.analysis.config.CompilationMode;
 import com.google.devtools.build.lib.analysis.config.InvalidConfigurationException;
 import com.google.devtools.build.lib.analysis.platform.ToolchainInfo;
@@ -331,7 +332,7 @@ public class CcModule
   @Override
   public LibraryToLink createLibraryLinkerInput(
       SkylarkRuleContext skylarkRuleContext, Artifact library, String skylarkArtifactCategory)
-      throws EvalException {
+      throws EvalException, InterruptedException {
     CcCommon.checkRuleWhitelisted(skylarkRuleContext);
     ArtifactCategory artifactCategory =
         ArtifactCategory.fromString(
@@ -363,7 +364,7 @@ public class CcModule
       Object skylarkLibrariesToLink,
       Object skylarkDynamicLibrariesForRuntime,
       Object skylarkUserLinkFlags)
-      throws EvalException {
+      throws EvalException, InterruptedException {
     CcCommon.checkRuleWhitelisted(skylarkRuleContext);
 
     SkylarkNestedSet librariesToLink = convertFromNoneable(skylarkLibrariesToLink, null);
@@ -386,7 +387,8 @@ public class CcModule
   }
 
   @Override
-  public CcSkylarkInfo createCcSkylarkInfo(Object skylarkRuleContextObject) throws EvalException {
+  public CcSkylarkInfo createCcSkylarkInfo(Object skylarkRuleContextObject)
+      throws EvalException, InterruptedException {
     SkylarkRuleContext skylarkRuleContext =
         convertFromNoneable(skylarkRuleContextObject, /* defaultValue= */ null);
     if (skylarkRuleContext != null) {
@@ -443,7 +445,7 @@ public class CcModule
       Object skylarkAdditionalIncludeScanningRoots,
       SkylarkList<CcCompilationInfo> ccCompilationInfos,
       Object purpose)
-      throws EvalException {
+      throws EvalException, InterruptedException {
     CcCommon.checkRuleWhitelisted(skylarkRuleContext);
     RuleContext ruleContext = skylarkRuleContext.getRuleContext();
     CcToolchainProvider ccToolchainProvider = convertFromNoneable(skylarkCcToolchainProvider, null);
@@ -523,7 +525,7 @@ public class CcModule
       Object dynamicLibrary,
       SkylarkList<CcLinkingInfo> skylarkCcLinkingInfos,
       boolean neverLink)
-      throws InterruptedException, EvalException {
+      throws InterruptedException, EvalException, InterruptedException {
     CcCommon.checkRuleWhitelisted(skylarkRuleContext);
     RuleContext ruleContext = skylarkRuleContext.getRuleContext();
     CcToolchainProvider ccToolchainProvider = convertFromNoneable(skylarkCcToolchainProvider, null);
@@ -542,11 +544,19 @@ public class CcModule
                 ruleContext.getConfiguration())
             .addLinkopts(linkopts)
             .setShouldCreateStaticLibraries(shouldCreateStaticLibraries)
-            .setDynamicLibrary(convertFromNoneable(dynamicLibrary, null))
+            .setLinkerOutputArtifact(convertFromNoneable(dynamicLibrary, null))
             .addCcLinkingInfos(skylarkCcLinkingInfos)
             .setNeverLink(neverLink);
     try {
-      return helper.link(ccCompilationOutputs, CcCompilationContext.EMPTY);
+      CcLinkingOutputs ccLinkingOutputs = CcLinkingOutputs.EMPTY;
+      if (!ccCompilationOutputs.isEmpty()) {
+        ccLinkingOutputs = helper.link(ccCompilationOutputs);
+      }
+      CcLinkingInfo ccLinkingInfo =
+          helper.buildCcLinkingInfo(ccLinkingOutputs, CcCompilationContext.EMPTY);
+      TransitiveInfoProviderMapBuilder providers = new TransitiveInfoProviderMapBuilder();
+      providers.put(ccLinkingInfo);
+      return new LinkingInfo(providers.build(), ccLinkingOutputs);
     } catch (RuleErrorException e) {
       throw new EvalException(ruleContext.getRule().getLocation(), e);
     }

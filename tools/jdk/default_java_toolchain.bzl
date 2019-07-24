@@ -74,7 +74,7 @@ DEFAULT_TOOLCHAIN_CONFIGURATION = {
         "@bazel_tools//third_party/java/jdk/langtools:jdk_compiler_jar",
     ],
     "javac_supports_workers": 1,
-    "jvm_opts": JDK8_JVM_OPTS,
+    "jvm_opts": JDK9_JVM_OPTS,
     "misc": DEFAULT_JAVACOPTS,
     "compatible_javacopts": COMPATIBLE_JAVACOPTS,
     "singlejar": ["@bazel_tools//tools/jdk:singlejar"],
@@ -106,3 +106,83 @@ def java_runtime_files(name, srcs):
             cmd = "cp $(JAVABASE)/%s $@" % src,
             outs = [src],
         )
+
+def _bootclasspath(ctx):
+    host_javabase = ctx.attr.host_javabase[java_common.JavaRuntimeInfo]
+
+    # explicitly list output files instead of using TreeArtifact to work around
+    # https://github.com/bazelbuild/bazel/issues/6203
+    classes = [
+        "DumpPlatformClassPath.class",
+        "DumpPlatformClassPath$1.class",
+    ]
+
+    class_outputs = [
+        ctx.actions.declare_file("%s_classes/%s" % (ctx.label.name, clazz))
+        for clazz in classes
+    ]
+
+    args = ctx.actions.args()
+    args.add("-source")
+    args.add("8")
+    args.add("-target")
+    args.add("8")
+    args.add("-Xlint:-options")
+    args.add("-cp")
+    args.add("%s/lib/tools.jar" % host_javabase.java_home)
+    args.add("-d")
+    args.add(class_outputs[0].dirname)
+    args.add(ctx.file.src)
+
+    ctx.actions.run(
+        executable = "%s/bin/javac" % host_javabase.java_home,
+        inputs = [ctx.file.src] + ctx.files.host_javabase,
+        outputs = class_outputs,
+        arguments = [args],
+    )
+
+    bootclasspath = ctx.outputs.jar
+
+    inputs = class_outputs + ctx.files.host_javabase
+
+    args = ctx.actions.args()
+    args.add("-XX:+IgnoreUnrecognizedVMOptions")
+    args.add("--add-exports=jdk.compiler/com.sun.tools.javac.platform=ALL-UNNAMED")
+    args.add_joined(
+        "-cp",
+        [class_outputs[0].dirname, "%s/lib/tools.jar" % host_javabase.java_home],
+        join_with = ctx.configuration.host_path_separator,
+    )
+    args.add("DumpPlatformClassPath")
+    args.add(ctx.attr.release)
+    args.add(bootclasspath)
+
+    if ctx.attr.target_javabase:
+        inputs.extend(ctx.files.target_javabase)
+        args.add(ctx.attr.target_javabase[java_common.JavaRuntimeInfo].java_home)
+
+    ctx.actions.run(
+        executable = str(host_javabase.java_executable_exec_path),
+        inputs = inputs,
+        outputs = [bootclasspath],
+        arguments = [args],
+    )
+
+bootclasspath = rule(
+    implementation = _bootclasspath,
+    attrs = {
+        "host_javabase": attr.label(
+            cfg = "host",
+            providers = [java_common.JavaRuntimeInfo],
+        ),
+        "release": attr.string(),
+        "src": attr.label(
+            cfg = "host",
+            allow_single_file = True,
+        ),
+        "target_javabase": attr.label(
+            providers = [java_common.JavaRuntimeInfo],
+        ),
+    },
+    outputs = {"jar": "%{name}.jar"},
+)

@@ -35,7 +35,6 @@ import com.google.devtools.build.lib.skyframe.serialization.testutils.Serializat
 import com.google.devtools.build.lib.vfs.FileSystem;
 import com.google.devtools.common.options.Options;
 import java.util.Map;
-import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -108,11 +107,14 @@ public class BuildConfigurationTest extends ConfigurationTestCase {
     BuildConfigurationCollection configs = createCollection("--cpu=piii");
     BuildConfiguration config = Iterables.getOnlyElement(configs.getTargetConfigurations());
     assertThat(config.getFragment(CppConfiguration.class).getCcToolchainRuleLabel())
-        .isEqualTo(Label.parseAbsoluteUnchecked("//third_party/crosstool/mock:cc-compiler-piii"));
+        .isEqualTo(
+            Label.parseAbsoluteUnchecked(
+                "//third_party/crosstool/mock:cc-compiler-piii-gcc-4.4.0"));
 
     BuildConfiguration hostConfig = configs.getHostConfiguration();
     assertThat(hostConfig.getFragment(CppConfiguration.class).getCcToolchainRuleLabel())
-        .isEqualTo(Label.parseAbsoluteUnchecked("//third_party/crosstool/mock:cc-compiler-k8"));
+        .isEqualTo(
+            Label.parseAbsoluteUnchecked("//third_party/crosstool/mock:cc-compiler-k8-gcc-4.4.0"));
   }
 
   @Test
@@ -139,12 +141,7 @@ public class BuildConfigurationTest extends ConfigurationTestCase {
       create("--cpu=bogus");
       fail();
     } catch (InvalidConfigurationException e) {
-      assertThat(e)
-          .hasMessageThat()
-          .matches(
-              Pattern.compile(
-                  "No default_toolchain found for cpu 'bogus'. "
-                      + "Valid cpus are: \\[\n(  [\\w-]+,\n)+]"));
+      assertThat(e).hasMessageThat().startsWith("No toolchain found for cpu 'bogus'");
     }
   }
 

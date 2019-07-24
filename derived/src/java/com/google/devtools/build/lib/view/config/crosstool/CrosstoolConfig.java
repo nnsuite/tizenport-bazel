@@ -34950,7 +34950,7 @@ public final class CrosstoolConfig {
      * new uses of this field.
      * </pre>
      *
-     * <code>required string default_target_cpu = 3;</code>
+     * <code>optional string default_target_cpu = 3;</code>
      */
     boolean hasDefaultTargetCpu();
     /**
@@ -34960,7 +34960,7 @@ public final class CrosstoolConfig {
      * new uses of this field.
      * </pre>
      *
-     * <code>required string default_target_cpu = 3;</code>
+     * <code>optional string default_target_cpu = 3;</code>
      */
     java.lang.String getDefaultTargetCpu();
     /**
@@ -34970,14 +34970,15 @@ public final class CrosstoolConfig {
      * new uses of this field.
      * </pre>
      *
-     * <code>required string default_target_cpu = 3;</code>
+     * <code>optional string default_target_cpu = 3;</code>
      */
     com.google.protobuf.ByteString
         getDefaultTargetCpuBytes();
 
     /**
      * <pre>
-     * The default toolchain to use for each given cpu.
+     * Deprecated: The default toolchain to use for each given cpu.
+     * Use cc_toolchain_suite.toolchains with only cpu specified instead
      * </pre>
      *
      * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -34986,7 +34987,8 @@ public final class CrosstoolConfig {
         getDefaultToolchainList();
     /**
      * <pre>
-     * The default toolchain to use for each given cpu.
+     * Deprecated: The default toolchain to use for each given cpu.
+     * Use cc_toolchain_suite.toolchains with only cpu specified instead
      * </pre>
      *
      * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -34994,7 +34996,8 @@ public final class CrosstoolConfig {
     com.google.devtools.build.lib.view.config.crosstool.CrosstoolConfig.DefaultCpuToolchain getDefaultToolchain(int index);
     /**
      * <pre>
-     * The default toolchain to use for each given cpu.
+     * Deprecated: The default toolchain to use for each given cpu.
+     * Use cc_toolchain_suite.toolchains with only cpu specified instead
      * </pre>
      *
      * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -35002,7 +35005,8 @@ public final class CrosstoolConfig {
     int getDefaultToolchainCount();
     /**
      * <pre>
-     * The default toolchain to use for each given cpu.
+     * Deprecated: The default toolchain to use for each given cpu.
+     * Use cc_toolchain_suite.toolchains with only cpu specified instead
      * </pre>
      *
      * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -35011,7 +35015,8 @@ public final class CrosstoolConfig {
         getDefaultToolchainOrBuilderList();
     /**
      * <pre>
-     * The default toolchain to use for each given cpu.
+     * Deprecated: The default toolchain to use for each given cpu.
+     * Use cc_toolchain_suite.toolchains with only cpu specified instead
      * </pre>
      *
      * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -35293,7 +35298,7 @@ public final class CrosstoolConfig {
      * new uses of this field.
      * </pre>
      *
-     * <code>required string default_target_cpu = 3;</code>
+     * <code>optional string default_target_cpu = 3;</code>
      */
     public boolean hasDefaultTargetCpu() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
@@ -35305,7 +35310,7 @@ public final class CrosstoolConfig {
      * new uses of this field.
      * </pre>
      *
-     * <code>required string default_target_cpu = 3;</code>
+     * <code>optional string default_target_cpu = 3;</code>
      */
     public java.lang.String getDefaultTargetCpu() {
       java.lang.Object ref = defaultTargetCpu_;
@@ -35328,7 +35333,7 @@ public final class CrosstoolConfig {
      * new uses of this field.
      * </pre>
      *
-     * <code>required string default_target_cpu = 3;</code>
+     * <code>optional string default_target_cpu = 3;</code>
      */
     public com.google.protobuf.ByteString
         getDefaultTargetCpuBytes() {
@@ -35348,7 +35353,8 @@ public final class CrosstoolConfig {
     private java.util.List<com.google.devtools.build.lib.view.config.crosstool.CrosstoolConfig.DefaultCpuToolchain> defaultToolchain_;
     /**
      * <pre>
-     * The default toolchain to use for each given cpu.
+     * Deprecated: The default toolchain to use for each given cpu.
+     * Use cc_toolchain_suite.toolchains with only cpu specified instead
      * </pre>
      *
      * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -35358,7 +35364,8 @@ public final class CrosstoolConfig {
     }
     /**
      * <pre>
-     * The default toolchain to use for each given cpu.
+     * Deprecated: The default toolchain to use for each given cpu.
+     * Use cc_toolchain_suite.toolchains with only cpu specified instead
      * </pre>
      *
      * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -35369,7 +35376,8 @@ public final class CrosstoolConfig {
     }
     /**
      * <pre>
-     * The default toolchain to use for each given cpu.
+     * Deprecated: The default toolchain to use for each given cpu.
+     * Use cc_toolchain_suite.toolchains with only cpu specified instead
      * </pre>
      *
      * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -35379,7 +35387,8 @@ public final class CrosstoolConfig {
     }
     /**
      * <pre>
-     * The default toolchain to use for each given cpu.
+     * Deprecated: The default toolchain to use for each given cpu.
+     * Use cc_toolchain_suite.toolchains with only cpu specified instead
      * </pre>
      *
      * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -35389,7 +35398,8 @@ public final class CrosstoolConfig {
     }
     /**
      * <pre>
-     * The default toolchain to use for each given cpu.
+     * Deprecated: The default toolchain to use for each given cpu.
+     * Use cc_toolchain_suite.toolchains with only cpu specified instead
      * </pre>
      *
      * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -35466,10 +35476,6 @@ public final class CrosstoolConfig {
         return false;
       }
       if (!hasMinorVersion()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasDefaultTargetCpu()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -35945,9 +35951,6 @@ public final class CrosstoolConfig {
         if (!hasMinorVersion()) {
           return false;
         }
-        if (!hasDefaultTargetCpu()) {
-          return false;
-        }
         for (int i = 0; i < getDefaultToolchainCount(); i++) {
           if (!getDefaultToolchain(i).isInitialized()) {
             return false;
@@ -36165,7 +36168,7 @@ public final class CrosstoolConfig {
        * new uses of this field.
        * </pre>
        *
-       * <code>required string default_target_cpu = 3;</code>
+       * <code>optional string default_target_cpu = 3;</code>
        */
       public boolean hasDefaultTargetCpu() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
@@ -36177,7 +36180,7 @@ public final class CrosstoolConfig {
        * new uses of this field.
        * </pre>
        *
-       * <code>required string default_target_cpu = 3;</code>
+       * <code>optional string default_target_cpu = 3;</code>
        */
       public java.lang.String getDefaultTargetCpu() {
         java.lang.Object ref = defaultTargetCpu_;
@@ -36200,7 +36203,7 @@ public final class CrosstoolConfig {
        * new uses of this field.
        * </pre>
        *
-       * <code>required string default_target_cpu = 3;</code>
+       * <code>optional string default_target_cpu = 3;</code>
        */
       public com.google.protobuf.ByteString
           getDefaultTargetCpuBytes() {
@@ -36222,7 +36225,7 @@ public final class CrosstoolConfig {
        * new uses of this field.
        * </pre>
        *
-       * <code>required string default_target_cpu = 3;</code>
+       * <code>optional string default_target_cpu = 3;</code>
        */
       public Builder setDefaultTargetCpu(
           java.lang.String value) {
@@ -36241,7 +36244,7 @@ public final class CrosstoolConfig {
        * new uses of this field.
        * </pre>
        *
-       * <code>required string default_target_cpu = 3;</code>
+       * <code>optional string default_target_cpu = 3;</code>
        */
       public Builder clearDefaultTargetCpu() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -36256,7 +36259,7 @@ public final class CrosstoolConfig {
        * new uses of this field.
        * </pre>
        *
-       * <code>required string default_target_cpu = 3;</code>
+       * <code>optional string default_target_cpu = 3;</code>
        */
       public Builder setDefaultTargetCpuBytes(
           com.google.protobuf.ByteString value) {
@@ -36283,7 +36286,8 @@ public final class CrosstoolConfig {
 
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36297,7 +36301,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36311,7 +36316,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36325,7 +36331,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36346,7 +36353,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36364,7 +36372,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36384,7 +36393,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36405,7 +36415,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36423,7 +36434,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36441,7 +36453,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36460,7 +36473,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36477,7 +36491,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36494,7 +36509,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36505,7 +36521,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36519,7 +36536,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36534,7 +36552,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36545,7 +36564,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -36557,7 +36577,8 @@ public final class CrosstoolConfig {
       }
       /**
        * <pre>
-       * The default toolchain to use for each given cpu.
+       * Deprecated: The default toolchain to use for each given cpu.
+       * Use cc_toolchain_suite.toolchains with only cpu specified instead
        * </pre>
        *
        * <code>repeated .com.google.devtools.build.lib.view.config.crosstool.DefaultCpuToolchain default_toolchain = 4;</code>
@@ -37160,7 +37181,7 @@ public final class CrosstoolConfig {
       "\030\001 \002(\t\022\034\n\024toolchain_identifier\030\002 \002(\t\"\225\002\n" +
       "\020CrosstoolRelease\022\025\n\rmajor_version\030\001 \002(\t" +
       "\022\025\n\rminor_version\030\002 \002(\t\022\032\n\022default_targe" +
-      "t_cpu\030\003 \002(\t\022c\n\021default_toolchain\030\004 \003(\0132H" +
+      "t_cpu\030\003 \001(\t\022c\n\021default_toolchain\030\004 \003(\0132H" +
       ".com.google.devtools.build.lib.view.conf" +
       "ig.crosstool.DefaultCpuToolchain\022R\n\ttool" +
       "chain\030\005 \003(\0132?.com.google.devtools.build." +
