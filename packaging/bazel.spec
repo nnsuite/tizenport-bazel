@@ -37,10 +37,6 @@ EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
 %install
 export NO_BRP_STRIP_DEBUG=true
 export NO_DEBUGINFO_STRIP_DEBUG=true
-%define __debug_install_post %{nil}
-: >debugfiles.list
-: >debugsources.list
-: >debugsourcefiles.list
 
 install -Dm0755 output/bazel %{buildroot}%{_bindir}/bazel
 
