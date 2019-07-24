@@ -2,7 +2,7 @@
 %global __debug_install_post %{nil}
 
 Name:		bazel
-Version:	0.18.1
+Version:	0.19.2
 Release:	0
 Summary:	Bazel
 License:	Apache-2.0
