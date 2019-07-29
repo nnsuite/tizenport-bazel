@@ -1,5 +1,7 @@
 %global debug_package %{nil}
 %global __debug_install_post %{nil}
+%global __os_install_post %{nil}
+# No debug pkg. No strip (Bazel is broken if stripped.)
 
 Name:		bazel
 Version:	0.19.2
