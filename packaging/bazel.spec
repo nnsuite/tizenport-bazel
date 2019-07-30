@@ -5,6 +5,11 @@
 
 Name:		bazel
 Version:	0.19.2
+%ifarch aarch64
+Source100:	bazel_aarch64.00
+Source101:	bazel_aarch64.01
+Source102:	bazel_aarch64.02
+%endif
 Release:	0
 Summary:	Bazel
 License:	Apache-2.0
@@ -18,12 +23,14 @@ Source1000:	bazel.manifest
 BuildRequires:	bash
 BuildRequires:	unzip, zip
 BuildRequires:	gcc-c++
+%ifnarch aarch64
 BuildRequires:	openjdk
 BuildRequires:	openjdk-jre
 BuildRequires:	openjdk-jre-essentials
 BuildRequires:	python
 BuildRequires:	pkgconfig
 BuildRequires:	pkgconfig(zlib)
+%endif
 
 Requires:	openjdk
 Requires:	openjdk-jre
@@ -41,6 +48,12 @@ chmod 0644 AUTHORS CHANGELOG.md CONTRIBUTORS LICENSE
 cp %{SOURCE1000} .
 
 %build
+%ifarch aarch64
+
+# Prebuilt binary will be used for aarch64
+
+%else
+
 %ifarch aarch64 %arm
 export BAZEL_JAVAC_OPTS="-J-Xmx2g -J-Xms200m"
 %endif
@@ -49,12 +62,20 @@ CXX=g++
 export PYTHON_BIN_PATH=/usr/bin/python
 EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
 ./output/bazel shutdown
+%endif
 
 %install
 export NO_BRP_STRIP_DEBUG=true
 export NO_DEBUGINFO_STRIP_DEBUG=true
 
+%ifarch aarch64
+mkdir -p %{buildroot}%{_bindir}
+cat %{SOURCE100} %{SOURCE101} %{SOURCE102} > %{buildroot}%{_bindir}/bazel
+chmod 0755 %{buildroot}%{_bindir}/bazel
+# Prebuilt binary will be used for aarch64
+%else
 install -Dm0755 output/bazel %{buildroot}%{_bindir}/bazel
+%endif
 
 %files
 %manifest bazel.manifest
