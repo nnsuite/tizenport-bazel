@@ -60,7 +60,7 @@ export BAZEL_JAVAC_OPTS="-J-Xmx2g -J-Xms200m"
 CC=gcc
 CXX=g++
 export PYTHON_BIN_PATH=/usr/bin/python
-EXTRA_BAZEL_ARGS="--host_javabase=@local_jdk//:jdk" bash ./compile.sh
+EXTRA_BAZEL_ARGS="--jobs 1 --host_javabase=@local_jdk//:jdk" bash ./compile.sh
 ./output/bazel shutdown
 %endif
 
