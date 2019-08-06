@@ -10,6 +10,11 @@ Source100:	bazel_aarch64.00
 Source101:	bazel_aarch64.01
 Source102:	bazel_aarch64.02
 %endif
+%ifarch armv7l
+Source200:	bazel_armv7l.00
+Source201:	bazel_armv7l.01
+Source202:	bazel_armv7l.02
+%endif
 Release:	0
 Summary:	Bazel
 License:	Apache-2.0
@@ -23,7 +28,7 @@ Source1000:	bazel.manifest
 BuildRequires:	bash
 BuildRequires:	unzip, zip
 BuildRequires:	gcc-c++
-%ifnarch aarch64
+%ifnarch aarch64 armv7l
 BuildRequires:	openjdk
 BuildRequires:	openjdk-jre
 BuildRequires:	openjdk-jre-essentials
@@ -48,9 +53,9 @@ chmod 0644 AUTHORS CHANGELOG.md CONTRIBUTORS LICENSE
 cp %{SOURCE1000} .
 
 %build
-%ifarch aarch64
+%ifarch aarch64 armv7l
 
-# Prebuilt binary will be used for aarch64
+# Prebuilt binary will be used for aarch64 / armv7l
 
 %else
 
@@ -74,7 +79,16 @@ cat %{SOURCE100} %{SOURCE101} %{SOURCE102} > %{buildroot}%{_bindir}/bazel
 chmod 0755 %{buildroot}%{_bindir}/bazel
 # Prebuilt binary will be used for aarch64
 %else
+
+%ifarch armv7l
+mkdir -p %{buildroot}%{_bindir}
+cat %{SOURCE200} %{SOURCE201} %{SOURCE202} > %{buildroot}%{_bindir}/bazel
+chmod 0755 %{buildroot}%{_bindir}/bazel
+# Prebuilt binary will be used for armv7l
+%else
+
 install -Dm0755 output/bazel %{buildroot}%{_bindir}/bazel
+%endif
 %endif
 
 %files
